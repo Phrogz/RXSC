@@ -6,7 +6,7 @@ class SCXML::Machine
 	def start
 		fail_with_error unless validate
 
-		connect_model!
+		interconnect!
 
 		@configuration.clear
 		@states_to_invoke = Set.new
@@ -19,8 +19,10 @@ class SCXML::Machine
 
 		@datamodel.crawl(self,@states_inited) if self.binding=="early"
 
-		initial.transitions.first.run
-		enter_states(initial.transitions)
+		if @initial
+			@initial.transitions.first.run
+			enter_states(@initial.transitions)
+		end
 
 		step
 	end

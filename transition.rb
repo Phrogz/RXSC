@@ -1,12 +1,11 @@
 module SCXML; end
 class SCXML::Transition
 	attr_reader :source, :targets, :events, :cond, :type
-	attr_accessor :machine
-	def initialize(source,options={})
+	def initialize(source=nil,options={})
 		@source  = source
 		@targets = []
 		@events  = []
-		@exec    = []
+		@exec    = NotifyingArray.new.on_change{ |e| e.parent = self }
 
 		@cond = options[:cond] if options.key?(:cond)
 		case t=options[:targets]
@@ -29,9 +28,12 @@ class SCXML::Transition
 		self
 	end
 
-	def machine=(scxml)
-		@machine = scxml
-		@exec.each{ |o| o.machine=scxml }
+	def parent=(state)
+		@source = state
+	end
+
+	def machine
+		@source && @source.machine
 	end
 
 	def connect_references!

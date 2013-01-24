@@ -2,7 +2,7 @@ require 'securerandom'
 module SCXML; end
 class SCXML::State
 	extend SCXML
-	attr_reader :id, :entry_ordering, :initial, :machine
+	attr_reader :id, :entry_ordering, :initial
 	attr_reader :states, :transitions, :invokes, :onenters, :onexits, :data
 	alias_method :name, :id
 	attr_accessor :parent
@@ -18,12 +18,13 @@ class SCXML::State
 
 	def initialize(id=SecureRandom.uuid)
 		@id          = id
-		@states      = []
-		@transitions = []
-		@invokes     = []
-		@onexits     = []
-		@onenters    = []
-		@data        = []
+		@states      = NotifyingArray.new
+		@transitions = NotifyingArray.new
+		@invokes     = NotifyingArray.new
+		@onexits     = NotifyingArray.new
+		@onenters    = NotifyingArray.new
+		@data        = NotifyingArray.new
+		[@states,@transitions,@invokes,@onexits,@onenters,@data].each{ |a| a.on_change{ |o| o.parent=self } }
 	end
 
 	def xml_properties(el,names,map={})
@@ -35,20 +36,16 @@ class SCXML::State
 		xml_properties(el,%w[id initial])
 
 		names = %w[state final parallel initial history].map{ |s| s.prepend('xmlns:') }.join('|')
-		@states.concat el.xpath(names).map(&SCXML::State)
-		@states.each{ |s| s.parent = self }
+		@states.concat(el.xpath(names).map(&SCXML::State).each{|s| s.parent=self})
 
 		# If there wasn't an initial attribute or element, pretend there was an attribute with the correct id
 		unless @initial || @states.find(&:initial?)
 			@initial = @states.first.id unless @states.empty?
 		end
 		if @initial # attribute
-			@initial = SCXML::Initial.new("bob#{rand(9999)}").tap{ |i| i.parent=self; i.transitions << SCXML::Transition.new(i,targets:@initial) }
+			@initial = SCXML::Initial.new.tap{ |i| i.parent=self; i.transitions << SCXML::Transition.new(i,targets:@initial) }
 		else # either element or none
-			unless @initial = @states.find(&:initial?)
-				# TODO: this seems wrong, as it adds an @initial to atomic states…but what else do you do with an <scxml> doc with no sub-states?
-				@initial = SCXML::Initial.new("whoa#{rand(9999)}").tap{ |i| i.parent=self; i.transitions << SCXML::Transition.new(i,targets:self) }
-			end
+			@initial = @states.find(&:initial?)
 		end
 		@initial.parent = self if @initial
 
@@ -82,12 +79,6 @@ class SCXML::State
 		@transitions.each(&:connect_references!)
 	end
 
-	def machine=( scxml )
-		@machine = scxml
-		[@states,@transitions,@onenters,@onexits,@data].each{ |a| a.each{ |o| o.machine = scxml } }
-		@initial.machine = scxml if @initial
-	end
-
 	def ancestors( stop_state=nil )
 		walker = self.parent
 		[].tap do |a|
@@ -100,6 +91,10 @@ class SCXML::State
 
 	def descendant_of?(s2)
 		parent && (parent==s2 || parent.descendant_of?(s2))
+	end
+
+	def machine
+		@parent && @parent.machine
 	end
 
 	def path

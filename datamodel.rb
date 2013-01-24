@@ -32,7 +32,7 @@ end
 class SCXML::Datamodel::Datum
 	extend SCXML
 	attr_reader :id, :src, :expr
-	attr_accessor :machine
+	attr_accessor :parent
 	def self.from_xml(el)
 		if    el[:src ] then new( el[:id],  src:el[:src]  )
 		elsif	el[:expr] then new( el[:id], expr:el[:expr] )
@@ -43,6 +43,9 @@ class SCXML::Datamodel::Datum
 		@id      = id
 		@expr    = data[:expr]
 		@src     = data[:src]
+	end
+	def machine
+		@parent && @parent.machine
 	end
 	def run
 		raise "<data src='...'> not supported" if @src

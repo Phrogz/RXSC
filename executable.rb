@@ -1,7 +1,10 @@
 module SCXML; end
 class SCXML::Executable
 	extend SCXML
-	attr_accessor :machine
+	attr_accessor :parent
+	def machine
+		parent.machine
+	end
 	def self.from_xml(el)
 		case el.name
 			when 'log'    then SCXML::Executable::Log.new.read_xml(el)

@@ -18,6 +18,7 @@ module SCXML
 	end
 end
 
+require_relative 'lib/notifyingarray'
 require_relative 'state'
 require_relative 'machine'
 require_relative 'transition'
@@ -25,4 +26,5 @@ require_relative 'executable'
 require_relative 'interpreter'
 require_relative 'event'
 require_relative 'datamodel'
+
 

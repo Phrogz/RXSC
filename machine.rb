@@ -15,11 +15,11 @@ class SCXML::Machine < SCXML::State
 		@state_by_id = {}
 	end
 	def machine; self; end
-	def connect_model!
-		self.machine = self
+	def interconnect!
 		@state_by_id = states_by_id
 		connect_references!
 		set_order(0)
+		self
 	end
 	def read_xml(el)
 		super

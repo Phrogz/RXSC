@@ -9,8 +9,7 @@ class MachineTester < Test::Unit::TestCase
 		] }
 	end
 	def test_can_parse_xml
-		simple = SCXML.Machine(@xml['simple'])
-		simple.start
+		simple = SCXML.Machine(@xml['simple']).interconnect!
 
 		assert_equal(2,simple.states.length)
 		s1 = simple.states.first
@@ -39,12 +38,12 @@ class MachineTester < Test::Unit::TestCase
 		simple = SCXML.Machine(@xml['simple'])
 		config = simple.configuration
 		assert(config.empty?)
+
 		simple.start
 		s1  = simple['s1']
 		s11 = simple['s11']
 		s2  = simple['s2']
 		s21 = simple['s21']
-
 		assert(config.member?(s1))
 		assert(config.member?(s11))
 
@@ -106,7 +105,7 @@ class MachineTester < Test::Unit::TestCase
 	end
 
 	def test_transition_targets
-		simple = SCXML.Machine(@xml['simple']).start
+		simple = SCXML.Machine(@xml['simple']).interconnect!
 
 		t0 = simple['s2'].transitions.first
 		refute(t0.has_targets?)
