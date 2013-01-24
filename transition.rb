@@ -47,7 +47,6 @@ class SCXML::Transition
 
 	def matches_event_name?(name)
 		chunks = name.split('.')
-		# TODO: optomize this by pre-chunking the known event list
 		@events.any?{ |e| e=='*' || e==chunks[0,e.split('.').length].join('.') }
 	end
 
