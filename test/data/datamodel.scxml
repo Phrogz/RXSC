@@ -1,0 +1,11 @@
+<scxml xmlns="http://www.w3.org/2005/07/SCXML" version="1.0" datamodel="ruby">
+	<datamodel>
+		<!-- <data id="employees" src="http://example.com/employees.json"/> -->
+		<data id="year" expr="2008"/>
+		<data id="ceo" expr="&quot;Mr Big&quot;"/>
+		<data id="profitable" expr="true"/>
+	</datamodel>
+	<state>
+		<datamodel><data id="kidlins">7 * 6</data></datamodel>
+	</state>
+</scxml>

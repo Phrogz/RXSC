@@ -1,0 +1,6 @@
+* Create initial state for states without initial attribute or element.
+* Data Model
+* <invoke>
+* Why doesn't going to action-3 via action.done kill the interpreter?
+* Autogenerate IDs when missing (per specs)
+* Catch Datamodel runtime errors and raise errors in the machine

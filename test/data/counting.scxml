@@ -1,0 +1,6 @@
+<scxml xmlns="http://www.w3.org/2005/07/SCXML" version="1.0">
+	<datamodel>
+		<data id="transitions" expr="0"/>
+	</datamodel>
+	<transition event="*"><assign location="transitions" expr="transitions + 1"></transition>
+</scxml>

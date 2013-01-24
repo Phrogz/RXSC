@@ -1,0 +1,24 @@
+enterOrder vs. entryOrder
+procedure signature
+isDescendant parameter ordering
+properAncestors() and properDescendants() -> what is "proper"
+
+initializeDataModel
+
+function vs. procedure
+
+Definition of "tail" of list as not the last.
+
+What is "historyValue"?
+
+When talking about someState.states, is this only proper states or also pseudo-states?
+
+inv.invoke(inv)
+
+What are the semantics of a "continue" in a while loop
+
+if not enabledTransitions.isEmpty()::
+
+preemptsTransition(t2, t) vs function preemptsTransition(t1, t2) vs. if isType2(t) and isType3(t2)
+
+<data id="CEO" expr="\"Mr Big\""/>
