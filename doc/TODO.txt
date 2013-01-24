@@ -4,3 +4,4 @@
 * Why doesn't going to action-3 via action.done kill the interpreter?
 * Autogenerate IDs when missing (per specs)
 * Catch Datamodel runtime errors and raise errors in the machine
+* Allow single atomic <scxml> to work.

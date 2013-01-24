@@ -25,24 +25,27 @@ class SCXML::Datamodel
 		end
 	end
 	def populate_from(state)
-		state.data.each{ |datum| self[datum.id] = datum.value_in(self) }
+		state.data.each(&:run)
 	end
 end
 
 class SCXML::Datamodel::Datum
 	extend SCXML
-	attr_reader :id
-	def initialize(el)
-		@id      = el[:id]
-		@expr    = el[:expr]
-		@src     = el[:src]
-		@content = el.text unless el.children.empty?
-		raise "<data> must have an id (#{el})" unless @id
-		raise "<data> must have either expr or src, but not both (#{el})" if @expr && @src
-		raise "<data> cannot of children if it has either expr or src (#{el})" if @content && (@expr || @src)
+	attr_reader :id, :src, :expr
+	attr_accessor :machine
+	def self.from_xml(el)
+		if    el[:src ] then new( el[:id],  src:el[:src]  )
+		elsif	el[:expr] then new( el[:id], expr:el[:expr] )
+		else                 new( el[:id], expr:el.text   )
+		end
 	end
-	def value_in(datamodel)
+	def initialize(id,data={})
+		@id      = id
+		@expr    = data[:expr]
+		@src     = data[:src]
+	end
+	def run
 		raise "<data src='...'> not supported" if @src
-		datamodel.run(@expr || @content)
+		machine.datamodel[@id] = machine.datamodel.run(@expr)
 	end
 end

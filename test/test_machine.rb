@@ -10,6 +10,7 @@ class MachineTester < Test::Unit::TestCase
 	end
 	def test_can_parse_xml
 		simple = SCXML.Machine(@xml['simple'])
+		simple.start
 
 		assert_equal(2,simple.states.length)
 		s1 = simple.states.first
@@ -22,6 +23,8 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal(s1,s11.parent)
 		assert(simple.transitions.empty?)
 		refute(s1.transitions.empty?)
+		assert_equal(simple,s1.parent)
+		assert_equal(s1,s11.parent)
 
 		assert(s1.compound?)
 		refute(s11.compound?)
@@ -31,17 +34,31 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal('e',s1t1.events.first)
 		assert_equal(simple['s21'],s1t1.targets.first)
 	end
+
 	def test_can_run
 		simple = SCXML.Machine(@xml['simple'])
-		# p simple.configuration
+		config = simple.configuration
+		assert(config.empty?)
 		simple.start
-		# p simple.configuration
+		s1  = simple['s1']
+		s11 = simple['s11']
+		s2  = simple['s2']
+		s21 = simple['s21']
+
+		assert(config.member?(s1))
+		assert(config.member?(s11))
+
+		config_was = config.dup
 		simple.fire_event('e')
-		# p simple.configuration
+		assert_equal(config_was,config,"No change without step")
+
 		simple.step
-		# p simple.configuration
+		assert(config.member?(s2))
+		assert(config.member?(s21))
+		config_was = config.dup
+
 		simple.step
-		# p simple.configuration
+		assert_equal(config_was,config,"No change without event")
 	end
 	def test_transition_name_matching
 		t = SCXML::Transition.new( nil, events:%w[a b.c c.d.e d.e.f.* f.] )
@@ -89,7 +106,7 @@ class MachineTester < Test::Unit::TestCase
 	end
 
 	def test_transition_targets
-		simple = SCXML.Machine(@xml['simple'])
+		simple = SCXML.Machine(@xml['simple']).start
 
 		t0 = simple['s2'].transitions.first
 		refute(t0.has_targets?)
@@ -108,24 +125,37 @@ class MachineTester < Test::Unit::TestCase
 	end
 
 	def test_history
-		history = SCXML.Machine(@xml['history'])
-		h = history['universe'].states.select(&:history?)
-		assert_equal(1,h.length)
+		h = SCXML.Machine(@xml['history']).start
+		config = h.configuration
 
-		history.start
-		# p history.configuration
+		assert_equal(1,h['universe'].states.select(&:history?).length)
+		assert(config.member?(h['action-1']))
 		
-		history.fire_event "action.done"
-		history.step
-		# p history.configuration
+		h.fire_event "action.done"
+		h.step
+		assert(config.member?(h['action-2']))
 
-		history.fire_event "application.error.CPUONFIRE"
-		history.step
-		# p history.configuration
+		h.fire_event "application.error.CPUONFIRE"
+		h.step
+		assert(config.member?(h['error-handler']))
 
-		history.fire_event "error.handled"
-		history.step
-		# p history.configuration
+		h.fire_event "error.handled"
+		h.step
+		assert(config.member?(h['action-2']))
+
+		h.fire_event "action.done"
+		h.step
+		assert(config.member?(h['action-3']))
+
+		h.fire_event "application.error.smoldering"
+		h.fire_event "error.handled"
+		h.step
+		assert(config.member?(h['action-3']))
+
+		h.fire_event "action.done"
+		h.step
+		assert(config.member?(h['action-4']))
+		refute(h.running?)
 	end
 
 	def test_datamodel		
@@ -137,19 +167,16 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal(42,d.run("bar*7"))
 
 		doc = SCXML.Machine(@xml['datamodel'])
-		d = SCXML::Datamodel.new
-		d.crawl(doc)
+		doc.start
+		d = doc.datamodel
 		assert_equal( 2008,     d[:year]       )
 		assert_equal( "Mr Big", d[:ceo]        )
 		assert_equal( true,     d[:profitable] )
 		assert_equal( 42,       d[:kidlins]    )
 
-		doc = SCXML.Machine(@xml['counting'])
-		doc.start
-		p doc.datamodel.variables
+		doc = SCXML.Machine(@xml['counting']).start
 		10.times{ doc.fire_event('e') }
 		doc.step
-
 		assert_equal( 10, doc.datamodel['transitions'] )
 	end
 end

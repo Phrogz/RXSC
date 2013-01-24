@@ -2,5 +2,7 @@
 	<datamodel>
 		<data id="transitions" expr="0"/>
 	</datamodel>
-	<transition event="*"><assign location="transitions" expr="transitions + 1"></transition>
+	<state id="counter">
+		<transition event="*"><assign location="transitions" expr="transitions + 1"></transition>
+	</state>
 </scxml>

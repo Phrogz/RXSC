@@ -5,10 +5,10 @@ module SCXML
 	VERSION = "0.1"
 
 	def self.Machine(xml)
-		SCXML::Machine.new( Nokogiri.XML(xml).root )
+		SCXML::Machine.from_xml( Nokogiri.XML(xml).root )
 	end
 
-	def to_proc; proc(&method(:new)) end
+	def to_proc; proc(&method(:from_xml)) end
 
 	def self.least_common_ancestor(*states)
 		rest = states[1..-1]

@@ -1,9 +1,14 @@
 module SCXML; end
 class SCXML::Machine
+	def running?
+		!!@running
+	end
 	def start
 		fail_with_error unless validate
 
-		@configuration    = Set.new
+		connect_model!
+
+		@configuration.clear
 		@states_to_invoke = Set.new
 		@history_value    = {} # Indexed by state
 		@datamodel        = SCXML::Datamodel.new
@@ -16,6 +21,7 @@ class SCXML::Machine
 
 		initial.transitions.first.run
 		enter_states(initial.transitions)
+
 		step
 	end
 
@@ -75,6 +81,7 @@ class SCXML::Machine
 			break if @external_queue.empty? # We only run one iteration of processing per `step` command
 		end if @running
 		exit_interpreter! unless @running
+		self
 	end
 
 	private
@@ -181,6 +188,9 @@ class SCXML::Machine
 	def exit_interpreter!
 		@configuration.sort_by(&:exit_ordering).each do |s|
 			s.onexits.each(&:run)
+			s.invokes.each(&:cancel)
+			@configuration.delete(s)
+			fire_event('quit') if s.final? && s.parent == self
 		end
 	end
 
