@@ -143,5 +143,13 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal( "Mr Big", d[:ceo]        )
 		assert_equal( true,     d[:profitable] )
 		assert_equal( 42,       d[:kidlins]    )
+
+		doc = SCXML.Machine(@xml['counting'])
+		doc.start
+		p doc.datamodel.variables
+		10.times{ doc.fire_event('e') }
+		doc.step
+
+		assert_equal( 10, doc.datamodel['transitions'] )
 	end
 end
