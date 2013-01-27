@@ -1,34 +1,44 @@
 module SCXML; end
 class SCXML::Machine
+	MAX_ITERATIONS = 10
+
 	def running?
 		!!@running
 	end
+
+	def atomics
+		@configuration.select(&:atomic?).map(&:id)
+	end
+
+	def fire_event( name, data=nil, internal=false )
+		p fire_event:name, data:data, internal:internal if $DEBUG
+		(internal ? @internal_queue : @external_queue) << SCXML::Event.new(name,data)
+		self
+	end
+
 	def start
 		fail_with_error unless validate
 
 		interconnect!
 
 		@configuration.clear
-		@states_to_invoke = Set.new
-		@history_value    = {} # Indexed by state
-		@datamodel        = SCXML::Datamodel.new
-		@states_inited    = Set.new
-		@internal_queue   = []
-		@external_queue   = []
-		@running          = true
+		@states_to_invoke   = Set.new
+		@history_value      = {} # Indexed by state
+		@datamodel          = SCXML::Datamodel.new(self)
+		@datamodel['_name'] = @name
+		@states_inited     = Set.new
+		@internal_queue    = []
+		@external_queue    = []
+		@running           = true
 
 		@datamodel.crawl(self,@states_inited) if self.binding=="early"
 
 		if @initial
 			@initial.transitions.first.run
-			enter_states(@initial.transitions)
+			enter_states_for_transitions(@initial.transitions)
 		end
 
 		step
-	end
-
-	def fire_event( name, data=nil )
-		@external_queue << SCXML::Event.new(name,data)
 	end
 
 	def step
@@ -37,7 +47,8 @@ class SCXML::Machine
 			stable = false
 
 			# Handle eventless transitions and transitions triggered by internal events
-			while @running && !stable
+			iterations = 0
+			while @running && !stable && iterations < MAX_ITERATIONS # FIXME remove this temporary iterations guard
 				enabled_transitions = eventless_transitions
 				if enabled_transitions.empty?
 					if @internal_queue.empty?
@@ -49,9 +60,12 @@ class SCXML::Machine
 					end
 				end
 				microstep(enabled_transitions) unless enabled_transitions.empty?
+				iterations += 1
 			end
 
-			# TODO: Run all invocations
+			warn "WARNING: stopping unstable system after #{iterations} iterations" if iterations >= MAX_ITERATIONS
+
+			# TODO: Enable invoke
 			# @states_to_invoke.each{ |state| state.invokes.each(&:run) }
 			# @states_to_invoke.clear
 
@@ -88,7 +102,7 @@ class SCXML::Machine
 
 	private
 
-	def enter_states(transitions)
+	def enter_states_for_transitions(transitions)
 		states_to_enter          = Set.new
 		states_for_default_entry = Set.new
 
@@ -108,7 +122,7 @@ class SCXML::Machine
 					states_for_default_entry << state
 					state.initial.transitions.first.targets.each{ |s| add_states_to_enter[s] }
 				elsif state.parallel?
-					state.states.each{ |s| add_states_to_enter[s] }
+					state.states.select(&:real?).each{ |s| add_states_to_enter[s] }
 				end
 			end
 		end
@@ -121,17 +135,22 @@ class SCXML::Machine
 			end
 			t.targets.each{ |s| add_states_to_enter[s] }
 			t.targets.each do |s|
-				s.ancestors.each do |anc|
+				s.ancestors(ancestor).each do |anc|
 					states_to_enter << anc
-					next unless anc.parallel?
-					anc.states.each do |child| # TODO: should this only be proper states?
-						add_states_to_enter[child] unless states_to_enter.any?{ |s| s.descendant_of?(child) }
+					if anc.parallel?
+						anc.states.select(&:real?).each do |child|
+							add_states_to_enter[child] unless states_to_enter.any?{ |s| s.descendant_of?(child) }
+						end
 					end
 				end
 			end
 		end
 
-		states_to_enter.sort_by(&:entry_ordering).each do |s|
+		enter_states(states_to_enter,states_for_default_entry)
+	end
+
+	def enter_states(states,states_for_default_entry)
+		states.sort_by(&:entry_ordering).each do |s|
 			@configuration    << s
 			@states_to_invoke << s
 			if binding=="late" && !@states_inited.member?(s)
@@ -143,9 +162,9 @@ class SCXML::Machine
 			if s.final?
 				parent      = s.parent
 				grandparent = parent.parent
-				@internal_queue << SCXML::Event.new( "done.state."+parent.id, s.donedata )
-				if grandparent.parallel? && grandparent.states.all?{ |s| in_final_state?(s) }
-					@internal_queue << SCXML::Event.new( "done.state."+parent.id )
+				fire_event( "done.state."+parent.id, s.donedata, true )
+				if grandparent && grandparent.parallel? && grandparent.states.select(&:real?).all?{ |s| in_final_state?(s) }
+					fire_event( "done.state."+parent.id, nil, true )
 				end	
 			end
 		end
@@ -184,7 +203,7 @@ class SCXML::Machine
 	def microstep(transitions)
 		exit_states(transitions)
 		transitions.each(&:run)
-		enter_states(transitions)
+		enter_states_for_transitions(transitions)
 	end
 
 	def exit_interpreter!
@@ -219,7 +238,7 @@ class SCXML::Machine
 			catch :found_matching_eventless do
 				[state,*state.ancestors].each do |s|
 					s.transitions.each do |t|
-						if t.events.empty? && t.test_condition
+						if t.events.empty? && t.condition_matched?(@datamodel)
 							enabled_transitions << t
 							throw :found_matching_eventless
 						end
@@ -237,10 +256,11 @@ class SCXML::Machine
 	end
 
 	def in_final_state?( state )
+		real_children = state.states.select(&:real?)
 		if state.compound?
-			state.states.any?{ |s| @configuration.member?(s) && in_final_state?(s) }
+			real_children.any?{ |s| @configuration.member?(s) && s.final? }
 		elsif state.parallel?
-			state.states.all?{ |s| in_final_state?(s) }
+			real_children.all?{ |s| in_final_state?(s) }
 		end		
 	end
 

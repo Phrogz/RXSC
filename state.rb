@@ -101,6 +101,10 @@ class SCXML::State
 		[*ancestors.reverse,self].map{ |s| s.name || '?' }.join('/')
 	end
 
+	def events
+		Set.new(@transitions.map(&:events).flatten) + @states.map(&:events).inject(Set.new,&:+)
+	end
+
 	def to_s
 		"<#{self.class} '#{path}'>"
 	end
@@ -130,8 +134,38 @@ end
 class SCXML::Final    < SCXML::State
 	def pure?; false; end
 	def final?; true; end
-	attr_reader :donedata
-	# TODO: process <donedata>
+	def initialize(*a)
+		super
+		@done_expressions = []
+	end
+	def read_xml(el)
+		super.tap{
+			if c=el.at_xpath('./xmlns:donedata/xmlns:content')
+				self.done_expr = c['expr'] || c.text.inspect
+			else
+				el.xpath('./xmlns:donedata/xmlns:param').each do |param|
+					# TODO: handle param location
+					add_named_done_expr(param)
+				end
+			end
+		}
+	end
+	def done_expr=( value )
+		@done_expression = value
+	end
+	def add_named_done_expr(name,expr)
+		@done_expressions << [name,expr]
+	end
+	def donedata
+		if @done_expression
+			run(@done_expression)
+		elsif !@done_expressions.empty?
+			Hash[@done_expressions.map{ |k,expr| [k,run(expr)] }]
+		end
+	end
+	def run(expr)
+		machine.datamodel.run(expr)
+	end
 end
 
 class SCXML::History  < SCXML::State

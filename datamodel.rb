@@ -1,6 +1,7 @@
 module SCXML; end
 class SCXML::Datamodel
-	def initialize
+	def initialize(machine=nil)
+		@machine = machine
 		@__scope = binding
 	end
 	def []( key )
@@ -11,6 +12,9 @@ class SCXML::Datamodel
 	end
 	def run(code)
 		@__scope.eval(code,'datamodel_evaluator')
+	end
+	def In(state_id)
+		@machine.configuration.any?{ |s| s.id==state_id }
 	end
 	def variables
 		run('Hash[local_variables.map{ |s| [s.to_s,eval(s.to_s)] }]')

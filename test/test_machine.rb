@@ -8,8 +8,11 @@ class MachineTester < Test::Unit::TestCase
 			Dir['*.scxml'].map{ |f| [f[/[^.]+/],IO.read(f,encoding:'utf-8')] }
 		] }
 	end
+
+
+
 	def test_can_parse_xml
-		simple = SCXML.Machine(@xml['simple']).interconnect!
+		simple = SCXML.Machine(@xml['simple'])
 
 		assert_equal(2,simple.states.length)
 		s1 = simple.states.first
@@ -59,6 +62,7 @@ class MachineTester < Test::Unit::TestCase
 		simple.step
 		assert_equal(config_was,config,"No change without event")
 	end
+
 	def test_transition_name_matching
 		t = SCXML::Transition.new( nil, events:%w[a b.c c.d.e d.e.f.* f.] )
 		assert(t.matches_event_name?('a'))
@@ -74,10 +78,12 @@ class MachineTester < Test::Unit::TestCase
 
 		refute(t.matches_event_name?('alpha'))
 		refute(t.matches_event_name?('b.charlie'))
-
+		refute(t.matches_event_name?('d.e.frank'))
+		refute(t.matches_event_name?('frank'))
 		refute(t.matches_event_name?('b'))
 		refute(t.matches_event_name?('.*'))
 		refute(t.matches_event_name?('.'))
+		refute(t.matches_event_name?('z.a'))
 
 		t = SCXML::Transition.new( nil, events:'*' )
 		assert(t.matches_event_name?('a'))
@@ -105,7 +111,7 @@ class MachineTester < Test::Unit::TestCase
 	end
 
 	def test_transition_targets
-		simple = SCXML.Machine(@xml['simple']).interconnect!
+		simple = SCXML.Machine(@xml['simple'])
 
 		t0 = simple['s2'].transitions.first
 		refute(t0.has_targets?)
@@ -177,5 +183,43 @@ class MachineTester < Test::Unit::TestCase
 		10.times{ doc.fire_event('e') }
 		doc.step
 		assert_equal( 10, doc.datamodel['transitions'] )
+	end
+
+	def test_events
+		mic = SCXML.Machine(@xml['microwave'])
+		assert_equal Set.new(%w[turn.on turn.off tick door.open door.close]), mic.events
+	end
+
+	def test_parallel_microwave
+		# TEST IN PROGRESS
+		mic = SCXML.Machine(@xml['microwave']).start
+		conf = mic.configuration
+		p a:conf.map(&:id)
+		mic.fire_event('turn.on').step
+		p b:conf.map(&:id)
+		mic.step
+		p c:conf.map(&:id)
+		3.times{ mic.fire_event('tick').step; p c2:conf.map(&:id) }
+		mic.fire_event('door.open').step
+		p d:conf.map(&:id)
+		10.times{ mic.fire_event('tick') }
+		mic.step
+		p e:conf.map(&:id)
+	end
+
+
+
+	def test_parallel
+		mic = SCXML.Machine(@xml['parallel']).start
+		conf = mic.configuration
+		p a:conf.map(&:id)
+		mic.fire_event('turn.on').step
+		p b:conf.map(&:id)
+		mic.step
+		p c:conf.map(&:id)
+		mic.fire_event('door.open').step
+		p d:conf.map(&:id)
+		mic.step
+		p e:conf.map(&:id)
 	end
 end

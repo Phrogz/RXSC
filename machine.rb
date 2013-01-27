@@ -2,9 +2,9 @@ module SCXML; end
 class SCXML::Machine < SCXML::State
 	extend SCXML
 	attr_reader :name, :datamodel, :binding, :configuration
-	undef_method :id
+	def id; name; end
 	def self.from_xml(el)
-		new.tap{ |o| o.read_xml(el) }
+		new.read_xml(el).interconnect!
 	end
 	def initialize(name="(unnamed)")
 		super

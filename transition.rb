@@ -62,21 +62,22 @@ class SCXML::Transition
 		if !@cond || @cond.empty?
 			true
 		else
-			datamodel.run(@cond)
+			datamodel.run(@cond).tap{ |r| p @cond => r if $DEBUG }
 		end
 	end
 
 	def preempt_level
-		@preempt_level ||= begin
-			if @targets.empty? then 1
-			elsif iswithinsinglechildofparallel then 2
-			else 3
-			end
+		# TODO: I have no idea if type 2 is valid; taken roughly from http://code.google.com/p/pyscxml/source/browse/branches/xpath/src/scxml/interpreter.py?r=312
+		if @targets.empty? then 1
+		elsif SCXML.common_parallel(@type=="internal" ? source : source.parent, *targets) != machine then 2
+		else 3
 		end
 	end
+
 	def run
 		@exec.each(&:run)
 	end
+
 	def to_s
 		"<#{self.class} #{source.path} -> #{targets.map{ |t| t.is_a?(SCXML::State) ? t.path : t}.join(' & ')}>"
 	end

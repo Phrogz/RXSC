@@ -5,7 +5,7 @@ module SCXML
 	VERSION = "0.1"
 
 	def self.Machine(xml)
-		SCXML::Machine.from_xml( Nokogiri.XML(xml).root )
+		SCXML::Machine.from_xml( Nokogiri.XML(xml,&:xinclude).root )
 	end
 
 	def to_proc; proc(&method(:from_xml)) end
@@ -13,6 +13,13 @@ module SCXML
 	def self.least_common_ancestor(*states)
 		rest = states[1..-1]
 		states.first.ancestors.select(&:compound?).each do |anc|
+			return anc if rest.all?{ |s| s.descendant_of?(anc) }
+		end
+	end
+	def self.common_parallel(*states)
+		# TODO: I have no idea if this is valid
+		rest = states[1..-1]
+		states.first.ancestors.select(&:parallel?).each do |anc|
 			return anc if rest.all?{ |s| s.descendant_of?(anc) }
 		end
 	end
@@ -26,5 +33,3 @@ require_relative 'executable'
 require_relative 'interpreter'
 require_relative 'event'
 require_relative 'datamodel'
-
-
