@@ -3,14 +3,16 @@ require_relative '../rxscy'
 
 class MachineTester < Test::Unit::TestCase
 	def setup
-		@data = File.join(File.dirname(__FILE__),'data')
-		@xml  = Dir.chdir(@data){ Hash[
+		@data = Dir.chdir(File.join(File.dirname(__FILE__),'data')){ Hash[
+			Dir['*.scxml'].map{ |f| [f[/[^.]+/],IO.read(f,encoding:'utf-8')] }
+		] }
+		@cases = Dir.chdir(File.join(File.dirname(__FILE__),'testcases')){ Hash[
 			Dir['*.scxml'].map{ |f| [f[/[^.]+/],IO.read(f,encoding:'utf-8')] }
 		] }
 	end
 
-	def test_can_parse_xml
-		simple = RXSCy.Machine(@xml['simple'])
+	def test1_can_parse_xml
+		simple = RXSCy.Machine(@data['simple'])
 
 		assert_equal(2,simple.states.length)
 		s1 = simple.states.first
@@ -35,8 +37,8 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal(simple['s21'],s1t1.targets.first)
 	end
 
-	def test_can_run
-		simple = RXSCy.Machine(@xml['simple'])
+	def test2_can_run
+		simple = RXSCy.Machine(@data['simple'])
 		config = simple.configuration
 		assert(config.empty?)
 
@@ -61,7 +63,7 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal(config_was,config,"No change without event")
 	end
 
-	def test_transition_name_matching
+	def test3_transition_name_matching
 		t = RXSCy::Transition.new( nil, events:%w[a b.c c.d.e d.e.f.* f.] )
 		assert(t.matches_event_name?('a'))
 		assert(t.matches_event_name?('a.b'))
@@ -89,7 +91,7 @@ class MachineTester < Test::Unit::TestCase
 		assert(t.matches_event_name?('c.d.e.f'))
 	end
 
-	def test_transition_conditions
+	def test4_transition_conditions
 		d  = RXSCy::Datamodel.new
 		d.run('ok = false')
 		t0 = RXSCy::Transition.new( nil              )
@@ -108,8 +110,8 @@ class MachineTester < Test::Unit::TestCase
 		assert t4.condition_matched?(d)
 	end
 
-	def test_transition_targets
-		simple = RXSCy.Machine(@xml['simple'])
+	def test5_transition_targets
+		simple = RXSCy.Machine(@data['simple'])
 
 		t0 = simple['s2'].transitions.first
 		refute(t0.has_targets?)
@@ -127,8 +129,8 @@ class MachineTester < Test::Unit::TestCase
 		assert(t1.has_targets?)
 	end
 
-	def test_history
-		h = RXSCy.Machine(@xml['history']).start
+	def test6_history
+		h = RXSCy.Machine(@data['history']).start
 		config = h.configuration
 
 		assert_equal(1,h['universe'].states.select(&:history?).length)
@@ -155,16 +157,12 @@ class MachineTester < Test::Unit::TestCase
 		h.step
 		assert(config.member?(h['action-3']))
 
-		h.fire_event "action.done"
-		h.step
+		h.fire_event("action.done").step
 		assert(config.member?(h['action-4']))
-		p config.map(&:id)
-		h.step
-		p config.map(&:id)
-		refute(h.running?)
+		refute(h.running?,"Machine should stop after moving to final state.")
 	end
 
-	def test_datamodel		
+	def test7_datamodel
 		d = RXSCy::Datamodel.new
 		d[:foo] = 17
 		assert_equal(17,d[:foo])
@@ -172,7 +170,7 @@ class MachineTester < Test::Unit::TestCase
 		d.run("bar = 6")
 		assert_equal(42,d.run("bar*7"))
 
-		doc = RXSCy.Machine(@xml['datamodel'])
+		doc = RXSCy.Machine(@data['datamodel'])
 		doc.start
 		d = doc.datamodel
 		assert_equal( 2008,     d[:year]       )
@@ -180,37 +178,39 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal( true,     d[:profitable] )
 		assert_equal( 42,       d[:kidlins]    )
 
-		doc = RXSCy.Machine(@xml['counting']).start
+		doc = RXSCy.Machine(@data['counting']).start
 		10.times{ doc.fire_event('e') }
 		doc.step
 		assert_equal( 10, doc.datamodel['transitions'] )
 	end
 
-	def test_events
-		mic = RXSCy.Machine(@xml['microwave'])
+	def test8_events_api
+		mic = RXSCy.Machine(@data['microwave'])
 		assert_equal Set.new(%w[turn.on turn.off tick door.open door.close]), mic.events
 	end
 
-	def test_final
-		final1 = RXSCy.Machine(@xml['final1']).start
+	def test9_final
+		final1 = RXSCy.Machine(@data['final1']).start
 		final1.fire_event('e').step
 		refute(final1.running?)
 	end
 
-	def test_parallel_microwave
-		# TEST IN PROGRESS
-		mic = RXSCy.Machine(@xml['microwave']).start
-		conf = mic.configuration
-		p a:conf.map(&:id)
+	def test10_parallel_microwave
+		mic = RXSCy.Machine(@data['microwave']).start
+		assert_equal(Set['off','closed'],mic.atomics)
+
 		mic.fire_event('turn.on').step
-		p b:conf.map(&:id)
-		mic.step
-		p c:conf.map(&:id)
-		3.times{ mic.fire_event('tick').step; p c2:conf.map(&:id) }
+		assert_equal(Set['cooking','closed'],mic.atomics)
+
+		3.times{ mic.fire_event('tick').step }
+		assert_equal(Set['cooking','closed'],mic.atomics)
+
 		mic.fire_event('door.open').step
-		p d:conf.map(&:id)
+		assert_equal(Set['paused','open'],mic.atomics)
+
+		mic.fire_event('door.close').step
 		10.times{ mic.fire_event('tick') }
 		mic.step
-		p e:conf.map(&:id)
+		assert_equal(Set['off','closed'],mic.atomics)
 	end
 end

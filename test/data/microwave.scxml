@@ -1,9 +1,8 @@
 <scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" name="Microwave">
-
-  <!-- trivial 5 second microwave oven example -->
+  <!-- trivial 10 second microwave oven example -->
   <!-- using parallel and In() predicate -->
   <datamodel>
-    <data id="cook_time"   expr="5"/>
+    <data id="cook_time"   expr="10"/>
     <data id="door_closed" expr="true"/>
     <data id="timer"       expr="0" />
   </datamodel>
@@ -11,21 +10,18 @@
   <parallel id="oven">
 
     <state id="radiation" initial="off">
-      <!-- <transition target="off"/> -->
-
       <state id="off">
         <transition event="turn.on" target="on"/>
       </state>
       
-      <state id="on" initial="idle">
-        <!-- <transition target="idle"/> -->
+      <state id="on" initial="paused">
         <transition event="turn.off"             target="off"/>
         <transition cond="timer &gt;= cook_time" target="off"/>
         
-        <state id="idle"><transition cond="In('closed')" target="cooking"/></state>
+        <state id="paused"><transition cond="In('closed')" target="cooking"/></state>
         
         <state id="cooking">
-          <transition cond="In('open')" target="idle"/>
+          <transition cond="In('open')" target="paused"/>
           <!-- Assumes that a 'tick' event is fired once a second -->
           <transition event="tick"><assign location="timer" expr="timer + 1"/></transition>
         </state>
@@ -38,5 +34,4 @@
     </state>
 
   </parallel>
-
 </scxml>

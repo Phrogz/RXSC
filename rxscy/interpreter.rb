@@ -16,6 +16,7 @@ class RXSCy::Machine
 		end
 	end
 
+	MAX_EVENT_ITERATIONS  = 100
 	MAX_ITERATIONS = 10
 
 	def running?
@@ -23,7 +24,7 @@ class RXSCy::Machine
 	end
 
 	def atomics
-		@configuration.select(&:atomic?).map(&:id)
+		Set.new @configuration.select(&:atomic?).map(&:id)
 	end
 
 	def fire_event( name, data=nil, internal=false )
@@ -58,19 +59,19 @@ class RXSCy::Machine
 	end
 
 	def step
-		loop do # Run-once loop, used for the ability to redo
+		while @running
 			enabled_transitions = nil
 			stable = false
 
 			# Handle eventless transitions and transitions triggered by internal events
 			iterations = 0
-			while @running && !stable && iterations < MAX_ITERATIONS # FIXME remove this temporary iterations guard
+			while @running && !stable && iterations < MAX_ITERATIONS
 				enabled_transitions = eventless_transitions
 				if enabled_transitions.empty?
 					if @internal_queue.empty?
 						stable = true
 					else
-						evt = internal_queue.shift
+						evt = @internal_queue.shift
 						@datamodel["_event"] = evt
 						enabled_transitions = transitions_for(evt)
 					end
@@ -79,7 +80,7 @@ class RXSCy::Machine
 				iterations += 1
 			end
 
-			warn "WARNING: stopping unstable system after #{iterations} iterations" if iterations >= MAX_ITERATIONS
+			warn "WARNING: stopped unstable system after #{iterations} iterations" if iterations >= MAX_ITERATIONS
 
 			# TODO: Enable invoke
 			# @states_to_invoke.each{ |state| state.invokes.each(&:run) }
@@ -89,29 +90,29 @@ class RXSCy::Machine
 			next unless @internal_queue.empty?
 
 			# Normally this is an asynchronous blocking call that waits for an event; instead, we'll bail if we can't find an event
-			evt = @external_queue.shift
-			break unless evt
+			if evt = @external_queue.shift
+				change = true
+				if evt.quit?
+					@running = false
+					break
+				end
+				@datamodel["_event"] = evt
 
-			if evt.quit?
-				@running = false
+				# TODO: Enable invoke
+				# @configuration.each do |state|
+				# 	state.invokes.each do |inv|
+				# 		applyFinalize(inv, externalEvent) if inv.invokeid==evt.invokeid
+				# 		send(inv.id, externalEvent) if inv.autoforward?
+				# 	end
+				# end
+
+				enabled_transitions = transitions_for(evt)
+				microstep(enabled_transitions) unless enabled_transitions.empty?
+			else
 				break
 			end
+		end
 
-			@datamodel["_event"] = evt
-
-			# TODO: enable invoke
-			# @configuration.each do |state|
-			# 	state.invokes.each do |inv|
-			# 		applyFinalize(inv, externalEvent) if inv.invokeid==evt.invokeid
-			# 		send(inv.id, externalEvent) if inv.autoforward?
-			# 	end
-			# end
-
-			enabled_transitions = transitions_for(evt)
-			microstep(enabled_transitions) unless enabled_transitions.empty?
-
-			break if @external_queue.empty? # We only run one iteration of processing per `step` command
-		end if @running
 		exit_interpreter! unless @running
 		self
 	end
@@ -217,6 +218,7 @@ class RXSCy::Machine
 	end
 
 	def microstep(transitions)
+		p microstep:transitions if $DEBUG
 		exit_states(transitions)
 		transitions.each(&:run)
 		enter_states_for_transitions(transitions)

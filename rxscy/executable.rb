@@ -44,6 +44,7 @@ class RXSCy::Executable::Log < RXSCy::Executable
 		self
 	end
 	def run
+		return unless $DEBUG
 		puts [@label,@expr && machine.datamodel.run(@expr)].compact.join(': ') if @label || @expr
 	end
 end
