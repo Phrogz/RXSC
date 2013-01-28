@@ -8,13 +8,15 @@ RXSCy is not yet complete or released. Several complex unit tests pass, but ther
 
 ## Processing Model
 
-While RXSCy aims to be 100% compliant with the [SCXML Interpretation Algorithm](http://www.w3.org/TR/scxml/#AlgorithmforSCXMLInterpretation), there is one semi-important change. Where the W3C implementation calls for the interpreter to run in a separate thread with a blocking queue feeding in the events, RXSCy is designed to be frame-based. You feed events into the queues and then turn a manual `machine.step` crank in the same thread. This will cause the event queues to be fully processed.
+RXSCy aims to be almost 100% compliant with the [SCXML Interpretation Algorithm](http://www.w3.org/TR/scxml/#AlgorithmforSCXMLInterpretation). However, there are a couple of minor variations planned:
+
+* **Manual Event Processing**: Where the W3C implementation calls for the interpreter to run in a separate thread with a blocking queue feeding in the events, RXSCy is designed to be frame-based. You feed events into the queues and then turn a manual `machine.step` crank the machine in the same thread. This will cause the event queues to be fully processed and the machine to run until it is stable, and then return.
+
+* **Configuration Clearing**: The W3C algorithm calls for the state machine configuration to be cleared when the interpreter is exited. RXSCy will instead leave the configuration (and datamodel) intact for you to inspect the final state of the machine.
 
 ## License
 
-RXSCy is copyright ©2013 by Gavin Kistner.
-
-RXSCy will be licensed under the MIT license. (More official boiler plate will be added.)
+RXSCy is copyright ©2013 by Gavin Kistner and is licensed under the [MIT License](http://opensource.org/licenses/MIT). See the LICENSE.txt file for more details.
 
 ## Contact
 
