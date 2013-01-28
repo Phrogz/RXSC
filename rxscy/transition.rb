@@ -1,5 +1,5 @@
-module SCXML; end
-class SCXML::Transition
+module RXSCy; end
+class RXSCy::Transition
 	attr_reader :source, :targets, :events, :cond, :type
 	def initialize(source=nil,options={})
 		@source  = source
@@ -24,7 +24,7 @@ class SCXML::Transition
 		@events.concat  el[:event ].split(/\s+/) if el[:event ]
 		@cond   = el[:cond]
 		@type   = el[:type]
-		@exec.concat el.elements.map(&SCXML::Executable)
+		@exec.concat el.elements.map(&RXSCy::Executable)
 		self
 	end
 
@@ -69,7 +69,7 @@ class SCXML::Transition
 	def preempt_level
 		# TODO: I have no idea if type 2 is valid; taken roughly from http://code.google.com/p/pyscxml/source/browse/branches/xpath/src/scxml/interpreter.py?r=312
 		if @targets.empty? then 1
-		elsif SCXML.common_parallel(@type=="internal" ? source : source.parent, *targets) != machine then 2
+		elsif RXSCy.common_parallel(@type=="internal" ? source : source.parent, *targets) != machine then 2
 		else 3
 		end
 	end
@@ -79,6 +79,6 @@ class SCXML::Transition
 	end
 
 	def to_s
-		"<#{self.class} #{source.path} -> #{targets.map{ |t| t.is_a?(SCXML::State) ? t.path : t}.join(' & ')}>"
+		"<#{self.class} #{source.path} -> #{targets.map{ |t| t.is_a?(RXSCy::State) ? t.path : t}.join(' & ')}>"
 	end
 end

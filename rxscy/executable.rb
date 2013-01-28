@@ -1,14 +1,14 @@
-module SCXML; end
-class SCXML::Executable
-	extend SCXML
+module RXSCy; end
+class RXSCy::Executable
+	extend RXSCy
 	attr_accessor :parent
 	def machine
 		parent.machine
 	end
 	def self.from_xml(el)
 		case el.name
-			when 'log'    then SCXML::Executable::Log.new.read_xml(el)
-			when 'assign' then SCXML::Executable::Assign.new(el[:location]).read_xml(el)
+			when 'log'    then RXSCy::Executable::Log.new.read_xml(el)
+			when 'assign' then RXSCy::Executable::Assign.new(el[:location]).read_xml(el)
 		end
 	end
 	def xml_properties(el,names)
@@ -16,7 +16,7 @@ class SCXML::Executable
 	end
 end
 
-class SCXML::Executable::Assign < SCXML::Executable
+class RXSCy::Executable::Assign < RXSCy::Executable
 	attr_reader :location, :expr
 	def initialize(location,expr=nil)
 		@location = location
@@ -32,7 +32,7 @@ class SCXML::Executable::Assign < SCXML::Executable
 	end
 end
 
-class SCXML::Executable::Log < SCXML::Executable
+class RXSCy::Executable::Log < RXSCy::Executable
 	attr_reader :label, :expr
 	def initialize(expr=nil,label=nil)
 		@label = label

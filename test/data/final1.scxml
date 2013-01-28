@@ -1,0 +1,7 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" initial="s1" name="Final1">
+	<datamodel><data id="truthy" expr="1" /></datamodel>
+	<state id="s1"><transition event="e" target="olldone" /></state>
+	<final id="olldone">
+		<donedata><param name="pass" expr="truthy &amp;&amp; true" /></donedata>
+	</final>
+</scxml>

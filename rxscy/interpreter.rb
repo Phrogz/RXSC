@@ -1,5 +1,21 @@
-module SCXML; end
-class SCXML::Machine
+module RXSCy;end
+
+class RXSCy::Machine
+	def self.least_common_ancestor(*states)
+		rest = states[1..-1]
+		states.first.ancestors.select(&:compound?).each do |anc|
+			return anc if rest.all?{ |s| s.descendant_of?(anc) }
+		end
+	end
+
+	def self.common_parallel(*states)
+		# TODO: I have no idea if this is valid
+		rest = states[1..-1]
+		states.first.ancestors.select(&:parallel?).each do |anc|
+			return anc if rest.all?{ |s| s.descendant_of?(anc) }
+		end
+	end
+
 	MAX_ITERATIONS = 10
 
 	def running?
@@ -12,7 +28,7 @@ class SCXML::Machine
 
 	def fire_event( name, data=nil, internal=false )
 		p fire_event:name, data:data, internal:internal if $DEBUG
-		(internal ? @internal_queue : @external_queue) << SCXML::Event.new(name,data)
+		(internal ? @internal_queue : @external_queue) << RXSCy::Event.new(name,data)
 		self
 	end
 
@@ -24,7 +40,7 @@ class SCXML::Machine
 		@configuration.clear
 		@states_to_invoke   = Set.new
 		@history_value      = {} # Indexed by state
-		@datamodel          = SCXML::Datamodel.new(self)
+		@datamodel          = RXSCy::Datamodel.new(self)
 		@datamodel['_name'] = @name
 		@states_inited     = Set.new
 		@internal_queue    = []
@@ -131,7 +147,7 @@ class SCXML::Machine
 			if t.type == "internal" && t.source.compound? && t.targets.every{ |s| s.descendant_of?(t.source) }
 				ancestor = t.source
 			else
-				ancestor = SCXML.least_common_ancestor( t.source, *t.targets )
+				ancestor = RXSCy::Machine.least_common_ancestor( t.source, *t.targets )
 			end
 			t.targets.each{ |s| add_states_to_enter[s] }
 			t.targets.each do |s|
@@ -177,7 +193,7 @@ class SCXML::Machine
 			if t.type=="internal" && t.source.compound? && t.states.all?{ |s| s.descendant_of(t.source) }
 				ancestor = t.source
 			else
-				ancestor = SCXML.least_common_ancestor(t.source,*t.targets)
+				ancestor = RXSCy::Machine.least_common_ancestor(t.source,*t.targets)
 			end
 			@configuration.each{ |s| states_to_exit << s if s.descendant_of?(ancestor) }
 		end
@@ -211,7 +227,7 @@ class SCXML::Machine
 			s.onexits.each(&:run)
 			s.invokes.each(&:cancel)
 			@configuration.delete(s)
-			fire_event('quit') if s.final? && s.parent == self
+			break if s.final? && s.parent == self
 		end
 	end
 

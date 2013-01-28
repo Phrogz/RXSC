@@ -1,5 +1,5 @@
 require 'test/unit'
-require_relative '../scxml'
+require_relative '../rxscy'
 
 class MachineTester < Test::Unit::TestCase
 	def setup
@@ -9,10 +9,8 @@ class MachineTester < Test::Unit::TestCase
 		] }
 	end
 
-
-
 	def test_can_parse_xml
-		simple = SCXML.Machine(@xml['simple'])
+		simple = RXSCy.Machine(@xml['simple'])
 
 		assert_equal(2,simple.states.length)
 		s1 = simple.states.first
@@ -38,7 +36,7 @@ class MachineTester < Test::Unit::TestCase
 	end
 
 	def test_can_run
-		simple = SCXML.Machine(@xml['simple'])
+		simple = RXSCy.Machine(@xml['simple'])
 		config = simple.configuration
 		assert(config.empty?)
 
@@ -64,7 +62,7 @@ class MachineTester < Test::Unit::TestCase
 	end
 
 	def test_transition_name_matching
-		t = SCXML::Transition.new( nil, events:%w[a b.c c.d.e d.e.f.* f.] )
+		t = RXSCy::Transition.new( nil, events:%w[a b.c c.d.e d.e.f.* f.] )
 		assert(t.matches_event_name?('a'))
 		assert(t.matches_event_name?('a.b'))
 		assert(t.matches_event_name?('b.c'))
@@ -85,20 +83,20 @@ class MachineTester < Test::Unit::TestCase
 		refute(t.matches_event_name?('.'))
 		refute(t.matches_event_name?('z.a'))
 
-		t = SCXML::Transition.new( nil, events:'*' )
+		t = RXSCy::Transition.new( nil, events:'*' )
 		assert(t.matches_event_name?('a'))
 		assert(t.matches_event_name?('a.b'))
 		assert(t.matches_event_name?('c.d.e.f'))
 	end
 
 	def test_transition_conditions
-		d  = SCXML::Datamodel.new
+		d  = RXSCy::Datamodel.new
 		d.run('ok = false')
-		t0 = SCXML::Transition.new( nil              )
-		t1 = SCXML::Transition.new( nil,cond:"false" )
-		t2 = SCXML::Transition.new( nil,cond:"true"  )
-		t3 = SCXML::Transition.new( nil,cond:"ok"    )
-		t4 = SCXML::Transition.new( nil,cond:"@yes"  )
+		t0 = RXSCy::Transition.new( nil              )
+		t1 = RXSCy::Transition.new( nil,cond:"false" )
+		t2 = RXSCy::Transition.new( nil,cond:"true"  )
+		t3 = RXSCy::Transition.new( nil,cond:"ok"    )
+		t4 = RXSCy::Transition.new( nil,cond:"@yes"  )
 
 		assert t0.condition_matched?(d)
 		refute t1.condition_matched?(d)
@@ -111,26 +109,26 @@ class MachineTester < Test::Unit::TestCase
 	end
 
 	def test_transition_targets
-		simple = SCXML.Machine(@xml['simple'])
+		simple = RXSCy.Machine(@xml['simple'])
 
 		t0 = simple['s2'].transitions.first
 		refute(t0.has_targets?)
 
-		t0 = SCXML::Transition.new( nil )
+		t0 = RXSCy::Transition.new( nil )
 		refute(t0.has_targets?)
 
 		t1 = simple['s1'].transitions.first
 		assert(t1.has_targets?)
 
-		t1 = SCXML::Transition.new( nil,targets:"s21" )
+		t1 = RXSCy::Transition.new( nil,targets:"s21" )
 		assert(t1.has_targets?)
 		
-		t1 = SCXML::Transition.new( nil,targets:%w[s2 s21] )
+		t1 = RXSCy::Transition.new( nil,targets:%w[s2 s21] )
 		assert(t1.has_targets?)
 	end
 
 	def test_history
-		h = SCXML.Machine(@xml['history']).start
+		h = RXSCy.Machine(@xml['history']).start
 		config = h.configuration
 
 		assert_equal(1,h['universe'].states.select(&:history?).length)
@@ -160,18 +158,21 @@ class MachineTester < Test::Unit::TestCase
 		h.fire_event "action.done"
 		h.step
 		assert(config.member?(h['action-4']))
+		p config.map(&:id)
+		h.step
+		p config.map(&:id)
 		refute(h.running?)
 	end
 
 	def test_datamodel		
-		d = SCXML::Datamodel.new
+		d = RXSCy::Datamodel.new
 		d[:foo] = 17
 		assert_equal(17,d[:foo])
 		assert_equal(17,d.run("foo"))
 		d.run("bar = 6")
 		assert_equal(42,d.run("bar*7"))
 
-		doc = SCXML.Machine(@xml['datamodel'])
+		doc = RXSCy.Machine(@xml['datamodel'])
 		doc.start
 		d = doc.datamodel
 		assert_equal( 2008,     d[:year]       )
@@ -179,20 +180,26 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal( true,     d[:profitable] )
 		assert_equal( 42,       d[:kidlins]    )
 
-		doc = SCXML.Machine(@xml['counting']).start
+		doc = RXSCy.Machine(@xml['counting']).start
 		10.times{ doc.fire_event('e') }
 		doc.step
 		assert_equal( 10, doc.datamodel['transitions'] )
 	end
 
 	def test_events
-		mic = SCXML.Machine(@xml['microwave'])
+		mic = RXSCy.Machine(@xml['microwave'])
 		assert_equal Set.new(%w[turn.on turn.off tick door.open door.close]), mic.events
+	end
+
+	def test_final
+		final1 = RXSCy.Machine(@xml['final1']).start
+		final1.fire_event('e').step
+		refute(final1.running?)
 	end
 
 	def test_parallel_microwave
 		# TEST IN PROGRESS
-		mic = SCXML.Machine(@xml['microwave']).start
+		mic = RXSCy.Machine(@xml['microwave']).start
 		conf = mic.configuration
 		p a:conf.map(&:id)
 		mic.fire_event('turn.on').step
@@ -203,22 +210,6 @@ class MachineTester < Test::Unit::TestCase
 		mic.fire_event('door.open').step
 		p d:conf.map(&:id)
 		10.times{ mic.fire_event('tick') }
-		mic.step
-		p e:conf.map(&:id)
-	end
-
-
-
-	def test_parallel
-		mic = SCXML.Machine(@xml['parallel']).start
-		conf = mic.configuration
-		p a:conf.map(&:id)
-		mic.fire_event('turn.on').step
-		p b:conf.map(&:id)
-		mic.step
-		p c:conf.map(&:id)
-		mic.fire_event('door.open').step
-		p d:conf.map(&:id)
 		mic.step
 		p e:conf.map(&:id)
 	end

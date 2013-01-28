@@ -1,5 +1,5 @@
-module SCXML; end
-class SCXML::Event
+module RXSCy; end
+class RXSCy::Event
 	attr_reader :name, :data
 	def initialize(name,data=nil)
 		@name = name

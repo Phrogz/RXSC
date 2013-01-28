@@ -1,18 +1,18 @@
 require 'securerandom'
-module SCXML; end
-class SCXML::State
-	extend SCXML
+module RXSCy; end
+class RXSCy::State
+	extend RXSCy
 	attr_reader :id, :entry_ordering, :initial
 	attr_reader :states, :transitions, :invokes, :onenters, :onexits, :data
 	alias_method :name, :id
 	attr_accessor :parent
 	def self.from_xml(el)
 		case el.name
-			when 'final'    then SCXML::Final
-			when 'initial'  then SCXML::Initial
-			when 'parallel' then SCXML::Parallel
-			when 'history'  then SCXML::History
-			else                 SCXML::State
+			when 'final'    then RXSCy::Final
+			when 'initial'  then RXSCy::Initial
+			when 'parallel' then RXSCy::Parallel
+			when 'history'  then RXSCy::History
+			else                 RXSCy::State
 		end.new.read_xml(el)
 	end
 
@@ -36,23 +36,23 @@ class SCXML::State
 		xml_properties(el,%w[id initial])
 
 		names = %w[state final parallel initial history].map{ |s| s.prepend('xmlns:') }.join('|')
-		@states.concat(el.xpath(names).map(&SCXML::State).each{|s| s.parent=self})
+		@states.concat(el.xpath(names).map(&RXSCy::State).each{|s| s.parent=self})
 
 		# If there wasn't an initial attribute or element, pretend there was an attribute with the correct id
 		unless @initial || @states.find(&:initial?)
 			@initial = @states.first.id unless @states.empty?
 		end
 		if @initial # attribute
-			@initial = SCXML::Initial.new.tap{ |i| i.parent=self; i.transitions << SCXML::Transition.new(i,targets:@initial) }
+			@initial = RXSCy::Initial.new.tap{ |i| i.parent=self; i.transitions << RXSCy::Transition.new(i,targets:@initial) }
 		else # either element or none
 			@initial = @states.find(&:initial?)
 		end
 		@initial.parent = self if @initial
 
-		@transitions.concat el.css('> transition').map{ |e| SCXML::Transition.new(self).read_xml(e) }
-		@onenters.concat    el.css('> onentry > *').map(&SCXML::Executable)
-		@onexits.concat     el.css('> onexit  > *').map(&SCXML::Executable)
-		@data.concat        el.css('> datamodel > data').map(&SCXML::Datamodel::Datum)
+		@transitions.concat el.css('> transition').map{ |e| RXSCy::Transition.new(self).read_xml(e) }
+		@onenters.concat    el.css('> onentry > *').map(&RXSCy::Executable)
+		@onexits.concat     el.css('> onexit  > *').map(&RXSCy::Executable)
+		@data.concat        el.css('> datamodel > data').map(&RXSCy::Datamodel::Datum)
 
 		self
 	end
@@ -122,16 +122,16 @@ class SCXML::State
 		end
 end
 
-class SCXML::Parallel < SCXML::State
+class RXSCy::Parallel < RXSCy::State
 	def pure?;    false; end
 	def parallel?; true; end
 end
-class SCXML::Initial  < SCXML::State
+class RXSCy::Initial  < RXSCy::State
 	def pure?;   false; end
 	def initial?; true; end
 end
 
-class SCXML::Final    < SCXML::State
+class RXSCy::Final    < RXSCy::State
 	def pure?; false; end
 	def final?; true; end
 	def initialize(*a)
@@ -144,8 +144,8 @@ class SCXML::Final    < SCXML::State
 				self.done_expr = c['expr'] || c.text.inspect
 			else
 				el.xpath('./xmlns:donedata/xmlns:param').each do |param|
-					# TODO: handle param location
-					add_named_done_expr(param)
+					# TODO: handle location instead of expr
+					add_named_done_expr(param['name'],param['expr'])
 				end
 			end
 		}
@@ -168,7 +168,7 @@ class SCXML::Final    < SCXML::State
 	end
 end
 
-class SCXML::History  < SCXML::State
+class RXSCy::History  < RXSCy::State
 	def pure?;   false; end
 	def history?; true; end
 	attr_reader :type
