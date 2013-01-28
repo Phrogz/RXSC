@@ -14,7 +14,7 @@ class RXSCy::Datamodel
 		@__scope.eval(code,'datamodel_evaluator')
 	end
 	def In(state_id)
-		@machine.configuration.any?{ |s| s.id==state_id }
+		@machine.is_active?(state_id)
 	end
 	def variables
 		run('Hash[local_variables.map{ |s| [s.to_s,eval(s.to_s)] }]')

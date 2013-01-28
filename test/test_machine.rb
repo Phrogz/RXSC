@@ -39,28 +39,23 @@ class MachineTester < Test::Unit::TestCase
 
 	def test2_can_run
 		simple = RXSCy.Machine(@data['simple'])
-		config = simple.configuration
-		assert(config.empty?)
+		assert(simple.active_state_ids.empty?)
 
 		simple.start
-		s1  = simple['s1']
-		s11 = simple['s11']
-		s2  = simple['s2']
-		s21 = simple['s21']
-		assert(config.member?(s1))
-		assert(config.member?(s11))
+		assert(simple.is_active?('s1'))
+		assert(simple.is_active?('s1'))
 
-		config_was = config.dup
+		was_active = simple.active_state_ids
 		simple.fire_event('e')
-		assert_equal(config_was,config,"No change without step")
+		assert_equal(was_active,simple.active_state_ids,"No change without step")
 
 		simple.step
-		assert(config.member?(s2))
-		assert(config.member?(s21))
-		config_was = config.dup
+		assert(simple.is_active?('s2'))
+		assert(simple.is_active?('s21'))
 
+		was_active = simple.active_state_ids
 		simple.step
-		assert_equal(config_was,config,"No change without event")
+		assert_equal(was_active,simple.active_state_ids,"No change without event")
 	end
 
 	def test3_transition_name_matching
@@ -131,34 +126,33 @@ class MachineTester < Test::Unit::TestCase
 
 	def test6_history
 		h = RXSCy.Machine(@data['history']).start
-		config = h.configuration
 
 		assert_equal(1,h['universe'].states.select(&:history?).length)
-		assert(config.member?(h['action-1']))
+		assert(h.is_active? 'action-1')
 		
 		h.fire_event "action.done"
 		h.step
-		assert(config.member?(h['action-2']))
+		assert(h.is_active? 'action-2')
 
 		h.fire_event "application.error.CPUONFIRE"
 		h.step
-		assert(config.member?(h['error-handler']))
+		assert(h.is_active? 'error-handler')
 
 		h.fire_event "error.handled"
 		h.step
-		assert(config.member?(h['action-2']))
+		assert(h.is_active? 'action-2')
 
 		h.fire_event "action.done"
 		h.step
-		assert(config.member?(h['action-3']))
+		assert(h.is_active? 'action-3')
 
 		h.fire_event "application.error.smoldering"
 		h.fire_event "error.handled"
 		h.step
-		assert(config.member?(h['action-3']))
+		assert(h.is_active? 'action-3')
 
 		h.fire_event("action.done").step
-		assert(config.member?(h['action-4']))
+		assert(h.is_active? 'action-4')
 		refute(h.running?,"Machine should stop after moving to final state.")
 	end
 
@@ -197,20 +191,20 @@ class MachineTester < Test::Unit::TestCase
 
 	def test10_parallel_microwave
 		mic = RXSCy.Machine(@data['microwave']).start
-		assert_equal(Set['off','closed'],mic.atomics)
+		assert_equal(Set['off','closed'],mic.active_atomic_ids)
 
 		mic.fire_event('turn.on').step
-		assert_equal(Set['cooking','closed'],mic.atomics)
+		assert_equal(Set['cooking','closed'],mic.active_atomic_ids)
 
 		3.times{ mic.fire_event('tick').step }
-		assert_equal(Set['cooking','closed'],mic.atomics)
+		assert_equal(Set['cooking','closed'],mic.active_atomic_ids)
 
 		mic.fire_event('door.open').step
-		assert_equal(Set['paused','open'],mic.atomics)
+		assert_equal(Set['paused','open'],mic.active_atomic_ids)
 
 		mic.fire_event('door.close').step
 		10.times{ mic.fire_event('tick') }
 		mic.step
-		assert_equal(Set['off','closed'],mic.atomics)
+		assert_equal(Set['off','closed'],mic.active_atomic_ids)
 	end
 end

@@ -23,7 +23,15 @@ class RXSCy::Machine
 		!!@running
 	end
 
-	def atomics
+	def is_active?(state_id)
+		@configuration.any?{ |s| s.id==state_id }
+	end
+
+	def active_state_ids
+		Set.new @configuration.map(&:id)
+	end
+
+	def active_atomic_ids
 		Set.new @configuration.select(&:atomic?).map(&:id)
 	end
 
@@ -119,6 +127,13 @@ class RXSCy::Machine
 
 	private
 
+	def microstep(transitions)
+		p microstep:transitions if $DEBUG
+		exit_states_for_transitions(transitions)
+		transitions.each(&:run)
+		enter_states_for_transitions(transitions)
+	end
+
 	def enter_states_for_transitions(transitions)
 		states_to_enter          = Set.new
 		states_for_default_entry = Set.new
@@ -188,7 +203,7 @@ class RXSCy::Machine
 		@configuration.each{ |s| @running = false if s.final? && s.parent==self }
 	end
 
-	def exit_states(transitions)
+	def exit_states_for_transitions(transitions)
 		states_to_exit = Set.new
 		transitions.select(&:has_targets?).each do |t|
 			if t.type=="internal" && t.source.compound? && t.states.all?{ |s| s.descendant_of(t.source) }
@@ -215,13 +230,6 @@ class RXSCy::Machine
 			s.invokes.each(&:cancel)
 			@configuration.delete s
 		end
-	end
-
-	def microstep(transitions)
-		p microstep:transitions if $DEBUG
-		exit_states(transitions)
-		transitions.each(&:run)
-		enter_states_for_transitions(transitions)
 	end
 
 	def exit_interpreter!
