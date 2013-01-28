@@ -66,10 +66,9 @@ class RXSCy::Transition
 		end
 	end
 
-	def preempt_level
-		# TODO: I have no idea if type 2 is valid; taken roughly from http://code.google.com/p/pyscxml/source/browse/branches/xpath/src/scxml/interpreter.py?r=312
+	def preempt_category
 		if @targets.empty? then 1
-		elsif RXSCy.common_parallel(@type=="internal" ? source : source.parent, *targets) != machine then 2
+		elsif RXSCy::Machine.least_common_parallel(@type=="internal" ? source : source.parent, *targets) then 2
 		else 3
 		end
 	end

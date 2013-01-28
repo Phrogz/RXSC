@@ -11,7 +11,7 @@ class MachineTester < Test::Unit::TestCase
 		] }
 	end
 
-	def test1_can_parse_xml
+	def test01_can_parse_xml
 		simple = RXSCy.Machine(@data['simple'])
 
 		assert_equal(2,simple.states.length)
@@ -37,7 +37,7 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal(simple['s21'],s1t1.targets.first)
 	end
 
-	def test2_can_run
+	def test02_can_run
 		simple = RXSCy.Machine(@data['simple'])
 		assert(simple.active_state_ids.empty?)
 
@@ -56,9 +56,15 @@ class MachineTester < Test::Unit::TestCase
 		was_active = simple.active_state_ids
 		simple.step
 		assert_equal(was_active,simple.active_state_ids,"No change without event")
+
+		# Required so that the XInclude relative path works
+		main = Dir.chdir(File.join(File.dirname(__FILE__),'data')) do
+			RXSCy.Machine(@data['main'])
+		end
+
 	end
 
-	def test3_transition_name_matching
+	def test03_transition_name_matching
 		t = RXSCy::Transition.new( nil, events:%w[a b.c c.d.e d.e.f.* f.] )
 		assert(t.matches_event_name?('a'))
 		assert(t.matches_event_name?('a.b'))
@@ -86,7 +92,7 @@ class MachineTester < Test::Unit::TestCase
 		assert(t.matches_event_name?('c.d.e.f'))
 	end
 
-	def test4_transition_conditions
+	def test04_transition_conditions
 		d  = RXSCy::Datamodel.new
 		d.run('ok = false')
 		t0 = RXSCy::Transition.new( nil              )
@@ -105,7 +111,7 @@ class MachineTester < Test::Unit::TestCase
 		assert t4.condition_matched?(d)
 	end
 
-	def test5_transition_targets
+	def test05_transition_targets
 		simple = RXSCy.Machine(@data['simple'])
 
 		t0 = simple['s2'].transitions.first
@@ -130,20 +136,16 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal(1,h['universe'].states.select(&:history?).length)
 		assert(h.is_active? 'action-1')
 		
-		h.fire_event "action.done"
-		h.step
+		h.fire_event("action.done").step
 		assert(h.is_active? 'action-2')
 
-		h.fire_event "application.error.CPUONFIRE"
-		h.step
+		h.fire_event("application.error.CPUONFIRE").step
 		assert(h.is_active? 'error-handler')
 
-		h.fire_event "error.handled"
-		h.step
+		h.fire_event("error.handled").step
 		assert(h.is_active? 'action-2')
 
-		h.fire_event "action.done"
-		h.step
+		h.fire_event("action.done").step
 		assert(h.is_active? 'action-3')
 
 		h.fire_event "application.error.smoldering"
@@ -156,7 +158,7 @@ class MachineTester < Test::Unit::TestCase
 		refute(h.running?,"Machine should stop after moving to final state.")
 	end
 
-	def test7_datamodel
+	def test07_datamodel
 		d = RXSCy::Datamodel.new
 		d[:foo] = 17
 		assert_equal(17,d[:foo])
@@ -178,12 +180,12 @@ class MachineTester < Test::Unit::TestCase
 		assert_equal( 10, doc.datamodel['transitions'] )
 	end
 
-	def test8_events_api
+	def test08_events_api
 		mic = RXSCy.Machine(@data['microwave'])
 		assert_equal Set.new(%w[turn.on turn.off tick door.open door.close]), mic.events
 	end
 
-	def test9_final
+	def test09_final
 		final1 = RXSCy.Machine(@data['final1']).start
 		final1.fire_event('e').step
 		refute(final1.running?)
@@ -207,4 +209,23 @@ class MachineTester < Test::Unit::TestCase
 		mic.step
 		assert_equal(Set['off','closed'],mic.active_atomic_ids)
 	end
+
+	def test11_preemption
+		m = RXSCy.Machine(@cases['testPreemption']).start
+		refute(m.running?,"testPreemption should run to completion")
+		assert(m.is_active?('pass'),"testPreemption should pass")
+	end
+
+	def test12_reentry
+		m = RXSCy.Machine(@cases['testReenterChild']).start
+		refute(m.running?,"testReenterChild should run to completion")
+		assert(m.is_active?('pass'),"testReenterChild should pass")
+	end
+
+	def test13_sibling_transitions
+		m = RXSCy.Machine(@cases['testSiblingTransition']).start
+		refute(m.running?,"testSiblingTransition should run to completion")
+		assert(m.is_active?('pass'),"testSiblingTransition should pass")
+	end
+
 end

@@ -1,5 +1,7 @@
 require 'securerandom'
-module RXSCy; end
+module RXSCy
+	NAMESPACES = { 'scxml'=>'http://www.w3.org/2005/07/scxml' }
+end
 class RXSCy::State
 	extend RXSCy
 	attr_reader :id, :entry_ordering, :initial
@@ -35,8 +37,8 @@ class RXSCy::State
 	def read_xml(el)
 		xml_properties(el,%w[id initial])
 
-		names = %w[state final parallel initial history].map{ |s| s.prepend('xmlns:') }.join('|')
-		@states.concat(el.xpath(names).map(&RXSCy::State).each{|s| s.parent=self})
+		names = %w[state final parallel initial history].map{ |s| s.prepend('scxml:') }.join('|')
+		@states.concat el.xpath(names,RXSCy::NAMESPACES).map(&RXSCy::State).each{|s| s.parent=self }
 
 		# If there wasn't an initial attribute or element, pretend there was an attribute with the correct id
 		unless @initial || @states.find(&:initial?)
@@ -140,10 +142,10 @@ class RXSCy::Final    < RXSCy::State
 	end
 	def read_xml(el)
 		super.tap{
-			if c=el.at_xpath('./xmlns:donedata/xmlns:content')
+			if c=el.at_xpath('./scxml:donedata/scxml:content',RXSCy::NAMESPACES)
 				self.done_expr = c['expr'] || c.text.inspect
 			else
-				el.xpath('./xmlns:donedata/xmlns:param').each do |param|
+				el.xpath('./scxml:donedata/scxml:param',RXSCy::NAMESPACES).each do |param|
 					# TODO: handle location instead of expr
 					add_named_done_expr(param['name'],param['expr'])
 				end

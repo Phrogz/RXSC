@@ -31,7 +31,7 @@
 			<state id="Test3Sub1">
 				<onentry>
 					<log expr="'Inside Test3Sub1...'"/>
-					<send event="'Timer'" delay="'5s'"/>
+					<send event="Timer"/>
 				</onentry>
 				<transition event="Timer" target="Test4"/>
 				<onexit><log expr="'Leaving Test3Sub1...'"/></onexit>

@@ -40,16 +40,16 @@
    <state id="Games"><!--   node-size-and-position x=40.0 y=90.0 w=190.0 h=460.0  -->
     <transition event="bumper.right" target="StoreSection"><!--   edge-path [StoreSection]  pointx=-1.0 pointy=-2.0 offsetx=21.0 offsety=14.0  --></transition>
     <transition event="bumper.left">
-     <send event="pastLeft"></send>
+     <raise event="pastLeft"/>
     </transition>
     <state id="Games0"><!--   node-size-and-position x=60.0 y=50.0 w=80.0 h=50.0  -->
      <transition event="dpad.down" target="Games1"><!--   edge-path [Games1]  x=70.0 y=160.0 pointx=0.0 pointy=3.0 offsetx=4.0 offsety=-29.0  --></transition>
      <transition event="dpad.left">
-      <send event="pastLeft"></send>
+      <raise event="pastLeft"/>
      </transition>
      <transition event="dpad.right" target="Store0"><!--   edge-path [Store0]  x=330.0 y=180.0 pointx=0.0 pointy=5.0 offsetx=-40.0 offsety=0.0  --></transition>
      <transition event="dpad.up">
-      <send event="pastTop"></send>
+      <raise event="pastTop"/>
      </transition>
      <transition event="back" target="quit"><!--   edge-path [quit]  x=300.0 y=330.0 pointx=-1.0 pointy=3.0 offsetx=-29.0 offsety=-12.0  --></transition>
     </state>
@@ -57,10 +57,10 @@
      <state id="Games2"><!--   node-size-and-position x=40.0 y=160.0 w=80.0 h=40.0  -->
       <transition event="Games2.pastTop back" target="Games1"><!--   edge-path [Games1]  x=100.0 y=140.0 pointx=0.0 pointy=-22.0 offsetx=1.0 offsety=23.0  --></transition>
       <transition event="games2.pastLeft">
-       <send event="pastLeft"></send>
+       <raise event="pastLeft"/>
       </transition>
       <transition event="Games2.pastBottom">
-       <send event="pastBottom"></send>
+       <raise event="pastBottom"/>
       </transition>
      </state>
      <history id="GameSection" type="shallow"><!--   node-size-and-position x=40.0 y=230.0 w=80.0 h=30.0  --></history>
@@ -68,7 +68,7 @@
       <transition event="dpad.up.held" target="Games0"><!--   edge-path [Games0]  x=125.0 y=145.0 pointx=-1.0 pointy=-31.0 offsetx=5.0 offsety=-27.0  --></transition>
       <transition event="dpad.down" target="Games2"><!--   edge-path [Games2]  x=60.0 y=150.0 pointx=0.0 pointy=-19.0 offsetx=4.0 offsety=-12.0  --></transition>
       <transition event="self.PastLeft">
-       <send event="pastLeft"></send>
+       <raise event="pastLeft"/>
       </transition>
       <transition event="back" target="quit"><!--   edge-path [quit]  pointx=-1.0 pointy=7.0 offsetx=-19.0 offsety=-24.0  --></transition>
      </state>
@@ -82,7 +82,7 @@
      <transition event="dpad.left back" target="Games0"><!--   edge-path [Games0]  x=240.0 y=210.0 pointx=-1.0 pointy=7.0 offsetx=-41.0 offsety=4.0  --></transition>
      <transition event="dpad.right" target="Grid0"><!--   edge-path [Grid0]  x=590.0 y=170.0 pointx=-1.0 pointy=4.0 offsetx=41.0 offsety=-6.0  --></transition>
      <transition event="dpad.up">
-      <send event="pastTop"></send>
+      <raise event="pastTop"/>
      </transition>
     </state>
     <state id="StoreContent" initial="Store1"><!--   node-size-and-position x=20.0 y=170.0 w=140.0 h=270.0  -->
@@ -90,17 +90,17 @@
       <transition event="dpad.up.held" target="Store0"><!--   edge-path [Store0]  x=110.0 y=120.0 pointx=-1.0 pointy=-33.0 offsetx=3.0 offsety=-16.0  --></transition>
       <transition event="dpad.down" target="Store2"><!--   edge-path [Store2]  x=50.0 y=150.0 pointx=0.0 pointy=-25.0 offsetx=-1.0 offsety=2.0  --></transition>
       <transition event="Store1.pastLeft">
-       <send event="pastLeft"></send>
+       <raise event="pastLeft"/>
       </transition>
       <transition event="back" target="Games0"><!--   edge-path [Games0]  pointx=-1.0 pointy=5.0 offsetx=-19.0 offsety=-14.0  --></transition>
      </state>
      <state id="Store2"><!--   node-size-and-position x=30.0 y=160.0 w=80.0 h=40.0  -->
       <transition event="Store2.pastTop  back" target="Store1"><!--   edge-path [Store1]  x=90.0 y=130.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=6.0  --></transition>
       <transition event="Store2.pastBottom">
-       <send event="pastBottom"></send>
+       <raise event="pastBottom"/>
       </transition>
       <transition event="Store2.pastLeft">
-       <send event="pastLeft"></send>
+       <raise event="pastLeft"/>
       </transition>
      </state>
      <history id="StoreSection" type="shallow"><!--   node-size-and-position x=30.0 y=230.0 w=80.0 h=30.0  --></history>
@@ -109,16 +109,16 @@
    <state id="Grid"><!--   node-size-and-position x=560.0 y=90.0 w=190.0 h=460.0  -->
     <transition event="bumper.left" target="StoreSection"><!--   edge-path [StoreSection]  pointx=-1.0 pointy=-17.0 offsetx=-10.0 offsety=7.0  --></transition>
     <transition event="bumper.right">
-     <send event="pastRight"></send>
+     <raise event="pastRight"/>
     </transition>
     <state id="Grid0"><!--   node-size-and-position x=60.0 y=50.0 w=80.0 h=40.0  -->
      <transition event="dpad.down" target="Grid1"><!--   edge-path [Grid1]  x=70.0 y=220.0 pointx=0.0 pointy=-27.0 offsetx=6.0 offsety=-32.0  --></transition>
      <transition event="dpad.right">
-      <send event="pastRight"></send>
+      <raise event="pastRight"/>
      </transition>
      <transition event="dpad.left back" target="Store0"><!--   edge-path [Store0]  x=470.0 y=210.0 pointx=-1.0 pointy=13.0 offsetx=-31.0 offsety=3.0  --></transition>
      <transition event="dpad.up">
-      <send event="pastTop"></send>
+      <raise event="pastTop"/>
      </transition>
     </state>
     <state id="GridContent" initial="Grid1"><!--   node-size-and-position x=30.0 y=170.0 w=140.0 h=270.0  -->
@@ -129,10 +129,10 @@
      </state>
      <state id="Grid2"><!--   node-size-and-position x=30.0 y=160.0 w=80.0 h=40.0  -->
       <transition event="dpad.down">
-       <send event="pastBottom"></send>
+       <raise event="pastBottom"/>
       </transition>
       <transition event="Grid2.pastRight">
-       <send event="pastRight"></send>
+       <raise event="pastRight"/>
       </transition>
       <transition event="Grid2.pastTop back" target="Grid1"><!--   edge-path [Grid1]  x=90.0 y=130.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=6.0  --></transition>
      </state>

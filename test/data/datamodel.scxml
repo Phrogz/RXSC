@@ -1,4 +1,4 @@
-<scxml xmlns="http://www.w3.org/2005/07/SCXML" version="1.0" datamodel="ruby">
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" datamodel="ruby">
 	<datamodel>
 		<!-- <data id="employees" src="http://example.com/employees.json"/> -->
 		<data id="year" expr="2008"/>

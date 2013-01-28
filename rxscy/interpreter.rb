@@ -8,15 +8,14 @@ class RXSCy::Machine
 		end
 	end
 
-	def self.common_parallel(*states)
-		# TODO: I have no idea if this is valid
+	def self.least_common_parallel(*states)
+		# https://github.com/jroxendal/PySCXML/wiki/Transition-Preemption-in-SCXML
 		rest = states[1..-1]
 		states.first.ancestors.select(&:parallel?).each do |anc|
 			return anc if rest.all?{ |s| s.descendant_of?(anc) }
 		end
 	end
 
-	MAX_EVENT_ITERATIONS  = 100
 	MAX_ITERATIONS = 10
 
 	def running?
@@ -58,10 +57,8 @@ class RXSCy::Machine
 
 		@datamodel.crawl(self,@states_inited) if self.binding=="early"
 
-		if @initial
-			@initial.transitions.first.run
-			enter_states_for_transitions(@initial.transitions)
-		end
+		@initial.transitions.first.run
+		enter_states_for_transitions(@initial.transitions)
 
 		step
 	end
@@ -122,6 +119,7 @@ class RXSCy::Machine
 		end
 
 		exit_interpreter! unless @running
+		puts "  post-step configuration: #{@configuration.map(&:path).join(' :: ')}" if $DEBUG
 		self
 	end
 
@@ -160,7 +158,7 @@ class RXSCy::Machine
 		end
 
 		transitions.select(&:has_targets?).each do |t|
-			if t.type == "internal" && t.source.compound? && t.targets.every{ |s| s.descendant_of?(t.source) }
+			if t.type == "internal" && t.source.compound? && t.targets.all?{ |s| s.descendant_of?(t.source) }
 				ancestor = t.source
 			else
 				ancestor = RXSCy::Machine.least_common_ancestor( t.source, *t.targets )
@@ -197,8 +195,8 @@ class RXSCy::Machine
 				fire_event( "done.state."+parent.id, s.donedata, true )
 				if grandparent && grandparent.parallel? && grandparent.states.select(&:real?).all?{ |s| in_final_state?(s) }
 					fire_event( "done.state."+parent.id, nil, true )
-				end	
-			end
+				end
+				end
 		end
 		@configuration.each{ |s| @running = false if s.final? && s.parent==self }
 	end
@@ -206,7 +204,7 @@ class RXSCy::Machine
 	def exit_states_for_transitions(transitions)
 		states_to_exit = Set.new
 		transitions.select(&:has_targets?).each do |t|
-			if t.type=="internal" && t.source.compound? && t.states.all?{ |s| s.descendant_of(t.source) }
+			if t.type=="internal" && t.source.compound? && t.targets.all?{ |s| s.descendant_of?(t.source) }
 				ancestor = t.source
 			else
 				ancestor = RXSCy::Machine.least_common_ancestor(t.source,*t.targets)
@@ -227,7 +225,7 @@ class RXSCy::Machine
 		# Exit the states
 		states_to_exit.each do |s|
 			s.onexits.each(&:run)
-			s.invokes.each(&:cancel)
+			# s.invokes.each(&:cancel) # TODO: Handle invokes
 			@configuration.delete s
 		end
 	end
@@ -235,7 +233,7 @@ class RXSCy::Machine
 	def exit_interpreter!
 		@configuration.sort_by(&:exit_ordering).each do |s|
 			s.onexits.each(&:run)
-			s.invokes.each(&:cancel)
+			# s.invokes.each(&:cancel) # TODO: invokes
 			# @configuration.delete(s)
 			if s.final? && s.parent == self
 				break
@@ -280,7 +278,7 @@ class RXSCy::Machine
 
 	def filter_preempted(transitions)
 		Set.new.tap{ |filtered| transitions.each{ |t1|
-			filtered << t1 unless filtered.any?{ |t2| (t2.type==3) || (t2.type==2 && t1.type==3)  }
+			filtered << t1 unless filtered.any?{ |t2| (t2.preempt_category==3) || (t2.preempt_category==2 && t1.preempt_category==3)  }
 		} }
 	end
 

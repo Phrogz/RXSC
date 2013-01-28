@@ -1,4 +1,4 @@
-<scxml xmlns="http://www.w3.org/2005/07/SCXML" version="1.0" id="HistoryTest">
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" id="HistoryTest">
 	<state id="universe">
 		<initial><transition target="history-actions"/></initial>
 		<transition event="application.error" target="error-handler"/>
