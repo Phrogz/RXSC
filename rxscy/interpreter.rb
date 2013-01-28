@@ -226,8 +226,11 @@ class RXSCy::Machine
 		@configuration.sort_by(&:exit_ordering).each do |s|
 			s.onexits.each(&:run)
 			s.invokes.each(&:cancel)
-			@configuration.delete(s)
-			break if s.final? && s.parent == self
+			# @configuration.delete(s)
+			if s.final? && s.parent == self
+				break
+				# TODO: return the done event with self.donedata to notify other machines
+			end
 		end
 	end
 
