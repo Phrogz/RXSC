@@ -154,7 +154,7 @@ class MachineTester < Test::Unit::TestCase
 		assert(h.is_active? 'action-3')
 
 		h.fire_event("action.done").step
-		assert(h.is_active? 'action-4')
+		assert(h.is_active? 'pass')
 		refute(h.running?,"Machine should stop after moving to final state.")
 	end
 
@@ -189,9 +189,13 @@ class MachineTester < Test::Unit::TestCase
 		final1 = RXSCy.Machine(@data['final1']).start
 		final1.fire_event('e').step
 		refute(final1.running?)
+
+		final2 = RXSCy.Machine(@data['final2']).start
+		assert(final2.is_active?('pass'),"final2 should pass")
+		assert(final2.running?,"final2 should still be running (entering a grandchild final should not stop the machine)")
 	end
 
-	def test10_parallel_microwave
+	def test10_parallel
 		mic = RXSCy.Machine(@data['microwave']).start
 		assert_equal(Set['off','closed'],mic.active_atomic_ids)
 
@@ -208,6 +212,14 @@ class MachineTester < Test::Unit::TestCase
 		10.times{ mic.fire_event('tick') }
 		mic.step
 		assert_equal(Set['off','closed'],mic.active_atomic_ids)
+
+		p = RXSCy.Machine(@cases['parallel3']).start
+		refute(p.running?,"parallel3 should run to completion")
+		assert(p.is_active?('pass'),"parallel3 should pass")
+
+		p = RXSCy.Machine(@cases['parallel4']).start
+		refute(p.running?,"parallel4 should run to completion")
+		assert(p.is_active?('pass'),"parallel4 should pass")
 	end
 
 	def test11_preemption
