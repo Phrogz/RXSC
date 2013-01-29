@@ -11,6 +11,7 @@ class RXSCy::Datamodel
 		run("#{key}=nil; ->(v){ #{key}=v }").call(value)
 	end
 	def run(code)
+		p code:code if $DEBUG
 		@__scope.eval(code,'datamodel_evaluator')
 	end
 	def In(state_id)

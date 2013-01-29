@@ -90,9 +90,9 @@ class RXSCy::Executable::Send < RXSCy::Executable
 	end
 	def run
 		dm  = machine.datamodel
-		evt = dm.run(@expr)
+		evt = dm.run(@eventexpr)
 		data = @namelist && Hash[ @namelist.map{ |n| [n,dm[n]] } ]
-		dm[dm.run(@idlocation)] = @SecureRandom.uuid unless @id
+		dm[dm.run(@idlocation)] = @SecureRandom.uuid unless @id || !@idlocation
 
 		# TODO: honor @delay by calling fire_event in a later threaded manner, after making the event queue thread safe?
 		machine.fire_event(evt,data,false)

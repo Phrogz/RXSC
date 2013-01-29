@@ -134,8 +134,9 @@ class RXSCy::Initial  < RXSCy::State
 end
 
 class RXSCy::Final    < RXSCy::State
-	def pure?; false; end
-	def final?; true; end
+	def pure?;  false; end
+	def final?;  true; end
+	def atomic?; true; end
 	def initialize(*a)
 		super
 		@done_expressions = []

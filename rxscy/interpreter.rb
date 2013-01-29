@@ -42,7 +42,6 @@ class RXSCy::Machine
 
 	def start
 		fail_with_error unless validate
-
 		interconnect!
 
 		@configuration.clear
@@ -119,7 +118,7 @@ class RXSCy::Machine
 		end
 
 		exit_interpreter! unless @running
-		puts "  post-step configuration: #{@configuration.map(&:path).join(' :: ')}" if $DEBUG
+		puts "  post-step-config: #{@configuration.map(&:path).join(' :: ')}" if $DEBUG
 		self
 	end
 
@@ -194,9 +193,9 @@ class RXSCy::Machine
 				grandparent = parent.parent
 				fire_event( "done.state."+parent.id, s.donedata, true )
 				if grandparent && grandparent.parallel? && grandparent.states.select(&:real?).all?{ |s| in_final_state?(s) }
-					fire_event( "done.state."+parent.id, nil, true )
+					fire_event( "done.state."+grandparent.id, nil, true )
 				end
-				end
+			end
 		end
 		@configuration.each{ |s| @running = false if s.final? && s.parent==self }
 	end
@@ -248,7 +247,7 @@ class RXSCy::Machine
 			catch :found_matching do
 				[state,*state.ancestors].each do |s|
 					s.transitions.each do |t|
-						if !t.events.empty? && t.matches_event_name?(event.name) && t.condition_matched?(@datamodel)
+						if t.matches_event_name?(event.name) && t.condition_matched?(@datamodel)
 							enabled_transitions << t
 							throw :found_matching
 						end
