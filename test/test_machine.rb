@@ -234,10 +234,14 @@ class MachineTester < Test::Unit::TestCase
 		assert(m.is_active?('pass'),"testReenterChild should pass")
 	end
 
-	def test13_sibling_transitions
+	def test13_transitions
 		m = RXSCy.Machine(@cases['testSiblingTransition']).start
 		refute(m.running?,"testSiblingTransition should run to completion")
 		assert(m.is_active?('pass'),"testSiblingTransition should pass")
+
+		m = RXSCy.Machine(@cases['internal_transition']).start
+		refute(m.running?,"internal_transition should run to completion")
+		assert(m.is_active?('pass'),"internal_transition should pass")
 	end
 
 end
