@@ -62,6 +62,11 @@ class RXSCy::Machine
 		step
 	end
 
+	def stop(msg=nil)
+		puts "Stopping #{self.name} #{"because #{msg}" if msg}" if $DEBUG
+		@running = false
+	end
+
 	def step
 		return unless @running
 		while @running
@@ -91,14 +96,16 @@ class RXSCy::Machine
 			# @states_to_invoke.each{ |state| state.invokes.each(&:run) }
 			# @states_to_invoke.clear
 
+
 			# Invoking may have raised internal error events and we need to back up and handle those too        
 			next unless @internal_queue.empty?
+
 
 			# Normally this is an asynchronous blocking call that waits for an event; instead, we'll bail if we can't find an event
 			if evt = @external_queue.shift
 				change = true
 				if evt.quit?
-					@running = false
+					stop("Quit event received")
 					break
 				end
 				@datamodel["_event"] = evt
@@ -113,11 +120,12 @@ class RXSCy::Machine
 
 				enabled_transitions = transitions_for(evt)
 				microstep(enabled_transitions) unless enabled_transitions.empty?
+				puts "    step-external: #{@configuration.map(&:path).join(' :: ')}" if $DEBUG
 			else
 				break
 			end
 		end
-
+	
 		exit_interpreter! unless @running
 		puts "  post-step-config: #{@configuration.map(&:path).join(' :: ')}" if $DEBUG
 		self
@@ -192,7 +200,7 @@ class RXSCy::Machine
 			if s.final?
 				parent = s.parent
 				if parent.scxml?
-					@running = false
+					stop("Final state #{s.id} entered.")
 				else
 					fire_event( "done.state.#{parent.id}", s.donedata, true )
 					grandparent = parent.parent
@@ -202,7 +210,6 @@ class RXSCy::Machine
 				end
 			end
 		end
-		@configuration.each{ |s| @running = false if s.final? && s.parent.scxml? }
 	end
 
 	def exit_states_for_transitions(transitions)
