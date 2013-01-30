@@ -63,6 +63,7 @@ class RXSCy::Machine
 	end
 
 	def step
+		return unless @running
 		while @running
 			enabled_transitions = nil
 			stable = false
