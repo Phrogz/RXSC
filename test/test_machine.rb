@@ -130,7 +130,7 @@ class MachineTester < Test::Unit::TestCase
 		assert(t1.has_targets?)
 	end
 
-	def test6_history
+	def test06_history
 		h = RXSCy.Machine(@data['history']).start
 
 		assert_equal(1,h['universe'].states.select(&:history?).length)
