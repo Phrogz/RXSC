@@ -6,6 +6,6 @@ class RXSCy::Event
 		@data = data
 	end
 	def quit?
-		name=="quit"
+		name=="quit-interpreter"
 	end
 end
