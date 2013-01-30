@@ -7,6 +7,7 @@ end
 class RXSCy::Machine < RXSCy::State
 	extend RXSCy
 	attr_reader :name, :datamodel, :binding
+	def scxml?; true; end
 	def id; name; end
 	def self.from_xml(el)
 		new.read_xml(el).interconnect!

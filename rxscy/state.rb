@@ -59,6 +59,7 @@ class RXSCy::State
 		self
 	end
 
+	def scxml?;    false; end
 	def pure?;     true;  end
 	def final?;    false; end
 	def parallel?; false; end

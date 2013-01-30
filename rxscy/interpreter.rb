@@ -189,15 +189,19 @@ class RXSCy::Machine
 			s.onenters.each(&:run)
 			s.initial.transitions.first.run if states_for_default_entry.member?(s)
 			if s.final?
-				parent      = s.parent
-				grandparent = parent.parent
-				fire_event( "done.state."+parent.id, s.donedata, true )
-				if grandparent && grandparent.parallel? && grandparent.states.select(&:real?).all?{ |s| in_final_state?(s) }
-					fire_event( "done.state."+grandparent.id, nil, true )
+				parent = s.parent
+				if parent.scxml?
+					@running = false
+				else
+					fire_event( "done.state.#{parent.id}", s.donedata, true )
+					grandparent = parent.parent
+					if grandparent && grandparent.parallel? && grandparent.states.select(&:real?).all?{ |s| in_final_state?(s) }
+						fire_event( "done.state.#{grandparent.id}", nil, true )
+					end
 				end
 			end
 		end
-		@configuration.each{ |s| @running = false if s.final? && s.parent==self }
+		@configuration.each{ |s| @running = false if s.final? && s.parent.scxml? }
 	end
 
 	def exit_states_for_transitions(transitions)
@@ -234,7 +238,7 @@ class RXSCy::Machine
 			s.onexits.each(&:run)
 			# s.invokes.each(&:cancel) # TODO: invokes
 			# @configuration.delete(s)
-			if s.final? && s.parent == self
+			if s.final? && s.parent.scxml?
 				break
 				# TODO: return the done event with self.donedata to notify other machines
 			end
