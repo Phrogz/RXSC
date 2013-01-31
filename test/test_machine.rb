@@ -244,4 +244,19 @@ class MachineTester < Test::Unit::TestCase
 		assert(m.is_active?('pass'),"internal_transition should pass")
 	end
 
+	def test14_callbacks
+		state_enters = Hash.new(0)
+		state_exits  = Hash.new(0)
+		transitions  = 0
+		para = RXSCy.Machine(@cases['parallel3-internal'])
+		para.on_entered{     |sid| state_enters[sid] += 1 }
+		para.on_transition{  |t|   transitions       += 1 }
+		para.on_before_exit{ |sid| state_exits[sid]  += 1 }
+		para.start
+		%w[p s1 s2 a b pass].each{ |sid| assert_equal(1,state_enters[sid]) }
+		%w[p s1 s2 a b].each{ |sid| assert_equal(1,state_exits[sid]) }
+		assert_equal(0,state_exits['pass'])
+		assert_equal(2,transitions)
+	end
+
 end

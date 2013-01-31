@@ -4,7 +4,7 @@ Pronounced _"RICK-see"_, the RXSCy library allows you to run [SCXML state machin
 
 The [Data Model](http://www.w3.org/TR/scxml/#data-module) for interpretation is all evaluated Ruby, allowing you to write conditionals and data expressions in one of the best scripting languages in the world.
 
-RXSCy is not yet complete or released. Several complex unit tests pass, but there are still a few puzzling edge cases that make the library unsuitable for general use. Further (and more importantly) the library still needs to expose ways for you to subscribe to notifications about transitions and state changes.
+RXSCy is not yet released, but it is close to it.
 
 ## SCXML Compliance
 

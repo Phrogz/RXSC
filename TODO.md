@@ -1,10 +1,8 @@
 ## TODO
 
 * <invoke>
-* Why doesn't going to action-3 via action.done kill the interpreter?
 * Catch Datamodel runtime errors and raise errors in the machine
 * Follow up on whether single `<scxml>` state should be allowed or not
-* Provide outside hooks for watching state changes
 * Interactions between multiple running state machines
 * Refactor test cases into multiple files; remove tests that are too implementation-dependent
 

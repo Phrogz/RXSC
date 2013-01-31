@@ -12,6 +12,7 @@ class RXSCy::Machine < RXSCy::State
 	def self.from_xml(el)
 		new.read_xml(el).interconnect!
 	end
+
 	def initialize(name="(unnamed)")
 		super
 		@name      = name
@@ -21,6 +22,11 @@ class RXSCy::Machine < RXSCy::State
 		@state_by_id = {}
 	end
 	def machine; self; end
+
+	def on_entered(&block);     @on_enter = block; end
+	def on_before_exit(&block); @on_exit  = block; end
+	def on_transition(&block);  @on_trans = block; end
+
 	def interconnect!
 		@state_by_id = states_by_id
 		connect_references!

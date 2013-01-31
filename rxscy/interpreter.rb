@@ -136,7 +136,10 @@ class RXSCy::Machine
 	def microstep(transitions)
 		p microstep:transitions if $DEBUG
 		exit_states_for_transitions(transitions)
-		transitions.each(&:run)
+		transitions.each do |t|
+			@on_trans[t] if @on_trans # Execute user-supplied callback
+			t.run
+		end
 		enter_states_for_transitions(transitions)
 	end
 
@@ -188,7 +191,8 @@ class RXSCy::Machine
 	end
 
 	def enter_states(states,states_for_default_entry)
-		states.sort_by(&:entry_ordering).each do |s|
+		sorted = states.sort_by(&:entry_ordering)
+		sorted.each do |s|
 			@configuration    << s
 			@states_to_invoke << s
 			if binding=="late" && !@states_inited.member?(s)
@@ -210,6 +214,7 @@ class RXSCy::Machine
 				end
 			end
 		end
+		sorted.map(&:id).each(&@on_enter) if @on_enter # Do this after entering all states, so we're in a new legal configuration
 	end
 
 	def exit_states_for_transitions(transitions)
@@ -225,6 +230,9 @@ class RXSCy::Machine
 
 		states_to_exit.each{ |s| @states_to_invoke.delete s }
 		states_to_exit = states_to_exit.sort_by(&:exit_ordering)
+
+		# Invoke any user-supplied callbacks _before_ exiting anything
+		states_to_exit.map(&:id).each(&@on_exit) if @on_exit
 
 		# Record the history before exiting
 		states_to_exit.each do |s|
