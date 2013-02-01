@@ -1,5 +1,5 @@
-<scxml initial="Stores.pastBottom" version="0.9" xmlns="http://www.w3.org/2005/07/scxml"><!--   node-size-and-position x=0.0 y=0.0 w=1270.0 h=1110.0  -->
- <parallel id="Stores.pastBottom"><!--   node-size-and-position x=130.0 y=30.0 w=1110.0 h=730.0  -->
+<scxml initial="pastBottom.Stores" version="0.9" xmlns="http://www.w3.org/2005/07/scxml"><!--   node-size-and-position x=0.0 y=0.0 w=1270.0 h=1110.0  -->
+ <parallel id="pastBottom.Stores"><!--   node-size-and-position x=130.0 y=30.0 w=1110.0 h=730.0  -->
   <state id="FlashBottom" initial="FlashBottomOff"><!--   node-size-and-position x=840.0 y=30.0 w=260.0 h=90.0  -->
    <state id="FlashBottomOff"><!--   node-size-and-position x=10.0 y=30.0 w=80.0 h=50.0  -->
     <transition event="pastBottom" target="FlashBottomOn"><!--   edge-path [FlashBottomOn]  x=150.0 y=40.0 pointx=0.0 pointy=6.0 offsetx=-19.0 offsety=3.0  --></transition>
@@ -55,11 +55,11 @@
     </state>
     <state id="GamesContent" initial="Games1"><!--   node-size-and-position x=20.0 y=170.0 w=150.0 h=270.0  -->
      <state id="Games2"><!--   node-size-and-position x=40.0 y=160.0 w=80.0 h=40.0  -->
-      <transition event="Games2.pastTop back" target="Games1"><!--   edge-path [Games1]  x=100.0 y=140.0 pointx=0.0 pointy=-22.0 offsetx=1.0 offsety=23.0  --></transition>
-      <transition event="games2.pastLeft">
+      <transition event="pastTop.Games2 back" target="Games1"><!--   edge-path [Games1]  x=100.0 y=140.0 pointx=0.0 pointy=-22.0 offsetx=1.0 offsety=23.0  --></transition>
+      <transition event="pastLeft.Games2">
        <raise event="pastLeft"/>
       </transition>
-      <transition event="Games2.pastBottom">
+      <transition event="pastBottom.Games2">
        <raise event="pastBottom"/>
       </transition>
      </state>
@@ -89,17 +89,17 @@
      <state id="Store1"><!--   node-size-and-position x=30.0 y=70.0 w=80.0 h=40.0  -->
       <transition event="dpad.up.held" target="Store0"><!--   edge-path [Store0]  x=110.0 y=120.0 pointx=-1.0 pointy=-33.0 offsetx=3.0 offsety=-16.0  --></transition>
       <transition event="dpad.down" target="Store2"><!--   edge-path [Store2]  x=50.0 y=150.0 pointx=0.0 pointy=-25.0 offsetx=-1.0 offsety=2.0  --></transition>
-      <transition event="Store1.pastLeft">
+      <transition event="pastLeft.Store1">
        <raise event="pastLeft"/>
       </transition>
       <transition event="back" target="Games0"><!--   edge-path [Games0]  pointx=-1.0 pointy=5.0 offsetx=-19.0 offsety=-14.0  --></transition>
      </state>
      <state id="Store2"><!--   node-size-and-position x=30.0 y=160.0 w=80.0 h=40.0  -->
-      <transition event="Store2.pastTop  back" target="Store1"><!--   edge-path [Store1]  x=90.0 y=130.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=6.0  --></transition>
-      <transition event="Store2.pastBottom">
+      <transition event="pastTop.Store2  back" target="Store1"><!--   edge-path [Store1]  x=90.0 y=130.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=6.0  --></transition>
+      <transition event="pastBottom.Store2">
        <raise event="pastBottom"/>
       </transition>
-      <transition event="Store2.pastLeft">
+      <transition event="pastLeft.Store2">
        <raise event="pastLeft"/>
       </transition>
      </state>
@@ -131,10 +131,10 @@
       <transition event="dpad.down">
        <raise event="pastBottom"/>
       </transition>
-      <transition event="Grid2.pastRight">
+      <transition event="pastRight.Grid2">
        <raise event="pastRight"/>
       </transition>
-      <transition event="Grid2.pastTop back" target="Grid1"><!--   edge-path [Grid1]  x=90.0 y=130.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=6.0  --></transition>
+      <transition event="pastTop.Grid2 back" target="Grid1"><!--   edge-path [Grid1]  x=90.0 y=130.0 pointx=0.0 pointy=-26.0 offsetx=-2.0 offsety=6.0  --></transition>
      </state>
      <history id="GridSection" type="shallow"><!--   node-size-and-position x=30.0 y=230.0 w=80.0 h=30.0  --></history>
     </state>
