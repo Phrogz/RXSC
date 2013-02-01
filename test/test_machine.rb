@@ -226,6 +226,11 @@ class MachineTester < Test::Unit::TestCase
 		m = RXSCy.Machine(@cases['testPreemption']).start
 		refute(m.running?,"testPreemption should run to completion")
 		assert(m.is_active?('pass'),"testPreemption should pass")
+
+		m = RXSCy.Machine(@data['preemption-categories']).interconnect!
+		{wee:2,dogs:1,larch:3,sapling:1}.each do |sid,level|
+			assert_equal( level, m[sid].transitions.first.preempt_category )
+		end
 	end
 
 	def test12_reentry

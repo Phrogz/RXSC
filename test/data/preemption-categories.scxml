@@ -1,0 +1,28 @@
+<scxml xmlns="http://www.w3.org/2005/07/scxml" name="root">
+	<transition event="trees" target="trees" />
+	<parallel id="pets">
+		<state id="cats">
+			<parallel id="cute">
+				<state id="wee">
+					<transition event="e" target="ugly">
+						<log label="cats" expr="'grow up'"/>
+					</transition>
+				</state>
+				<state id="fuzzy"/>
+			</parallel>
+			<state id="ugly" />
+		</state>
+		<state id="dogs">
+			<transition event="e"><log label="dogs say" expr="'woof'"/></transition>
+		</state>
+	</parallel>
+	<state id="trees">
+		<state id="larch">
+			<transition event="f" target="seed" type="internal"><log expr="'larch1'"/></transition>
+			<state id="sapling">
+				<transition event="f"><log expr="'seed'"/></transition>
+				<state id="seed"/>
+			</state>
+		</state>
+	</state>
+</scxml>

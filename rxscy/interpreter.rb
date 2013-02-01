@@ -14,6 +14,7 @@ class RXSCy::Machine
 		states.first.ancestors.select(&:parallel?).each do |anc|
 			return anc if rest.all?{ |s| s.descendant_of?(anc) }
 		end
+		nil
 	end
 
 	MAX_ITERATIONS = 10
