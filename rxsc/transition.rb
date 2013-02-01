@@ -1,5 +1,5 @@
-module RXSCy; end
-class RXSCy::Transition
+module RXSC; end
+class RXSC::Transition
 	attr_reader :source, :targets, :events, :cond, :type
 	def initialize(source=nil,options={})
 		@source  = source
@@ -24,7 +24,7 @@ class RXSCy::Transition
 		@events.concat  el[:event ].split(/\s+/) if el[:event ]
 		@cond   = el[:cond]
 		@type   = el[:type]
-		@exec.concat el.elements.map(&RXSCy::Executable)
+		@exec.concat el.elements.map(&RXSC::Executable)
 		self
 	end
 
@@ -68,7 +68,7 @@ class RXSCy::Transition
 
 	def preempt_category
 		if @targets.empty? then 1
-		elsif RXSCy::Machine.least_common_parallel(@type=="internal" ? source : source.parent, *targets) then 2
+		elsif RXSC::Machine.least_common_parallel(@type=="internal" ? source : source.parent, *targets) then 2
 		else 3
 		end
 	end
@@ -78,6 +78,6 @@ class RXSCy::Transition
 	end
 
 	def to_s
-		"<#{self.class} #{source.path} -> #{targets.map{ |t| t.is_a?(RXSCy::State) ? t.path : t}.join(' & ')}>"
+		"<#{self.class} #{source.path} -> #{targets.map{ |t| t.is_a?(RXSC::State) ? t.path : t}.join(' & ')}>"
 	end
 end

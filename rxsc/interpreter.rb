@@ -1,6 +1,6 @@
-module RXSCy;end
+module RXSC;end
 
-class RXSCy::Machine
+class RXSC::Machine
 	def self.least_common_ancestor(*states)
 		rest = states[1..-1]
 		states.first.ancestors.select(&:compound?).each do |anc|
@@ -37,7 +37,7 @@ class RXSCy::Machine
 
 	def fire_event( name, data=nil, internal=false )
 		p fire_event:name, data:data, internal:internal if $DEBUG
-		(internal ? @internal_queue : @external_queue) << RXSCy::Event.new(name,data)
+		(internal ? @internal_queue : @external_queue) << RXSC::Event.new(name,data)
 		self
 	end
 
@@ -48,7 +48,7 @@ class RXSCy::Machine
 		@configuration.clear
 		@states_to_invoke   = Set.new
 		@history_value      = {} # Indexed by state
-		@datamodel          = RXSCy::Datamodel.new(self)
+		@datamodel          = RXSC::Datamodel.new(self)
 		@datamodel['_name'] = @name
 		@states_inited     = Set.new
 		@internal_queue    = []
@@ -173,7 +173,7 @@ class RXSCy::Machine
 			if t.type == "internal" && t.source.compound? && t.targets.all?{ |s| s.descendant_of?(t.source) }
 				ancestor = t.source
 			else
-				ancestor = RXSCy::Machine.least_common_ancestor( t.source, *t.targets )
+				ancestor = RXSC::Machine.least_common_ancestor( t.source, *t.targets )
 			end
 			t.targets.each{ |s| add_states_to_enter[s] }
 			t.targets.each do |s|
@@ -224,7 +224,7 @@ class RXSCy::Machine
 			if t.type=="internal" && t.source.compound? && t.targets.all?{ |s| s.descendant_of?(t.source) }
 				ancestor = t.source
 			else
-				ancestor = RXSCy::Machine.least_common_ancestor(t.source,*t.targets)
+				ancestor = RXSC::Machine.least_common_ancestor(t.source,*t.targets)
 			end
 			@configuration.each{ |s| states_to_exit << s if s.descendant_of?(ancestor) }
 		end

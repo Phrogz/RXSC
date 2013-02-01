@@ -1,5 +1,5 @@
-module RXSCy; end
-class RXSCy::Datamodel
+module RXSC; end
+class RXSC::Datamodel
 	def initialize(machine=nil)
 		@machine = machine
 		@__scope = binding
@@ -33,8 +33,8 @@ class RXSCy::Datamodel
 	end
 end
 
-class RXSCy::Datamodel::Datum
-	extend RXSCy
+class RXSC::Datamodel::Datum
+	extend RXSC
 	attr_reader :id, :src, :expr
 	attr_accessor :parent
 	def self.from_xml(el)

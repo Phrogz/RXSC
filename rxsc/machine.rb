@@ -1,11 +1,11 @@
-module RXSCy
+module RXSC
 	def self.Machine(xml)
-		RXSCy::Machine.from_xml( Nokogiri.XML(xml,&:xinclude).root )
+		RXSC::Machine.from_xml( Nokogiri.XML(xml,&:xinclude).root )
 	end
 end
 
-class RXSCy::Machine < RXSCy::State
-	extend RXSCy
+class RXSC::Machine < RXSC::State
+	extend RXSC
 	attr_reader :name, :datamodel, :binding
 	def scxml?; true; end
 	def id; name; end

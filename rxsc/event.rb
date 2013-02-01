@@ -1,5 +1,5 @@
-module RXSCy; end
-class RXSCy::Event
+module RXSC; end
+class RXSC::Event
 	attr_reader :name, :data
 	def initialize(name,data=nil)
 		@name = name
