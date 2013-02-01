@@ -4,7 +4,7 @@ $: << 'lib'
 require 'rxsc'
 
 Gem::Specification.new do |s|
-	s.name        = "RXSC"
+	s.name        = "rxsc"
 	s.version     = RXSC::VERSION
 	s.date        = "2013-01-31"
 	s.authors     = ["Gavin Kistner"]
