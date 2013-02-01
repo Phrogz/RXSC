@@ -1,17 +1,17 @@
 require 'nokogiri'
 require 'set'
 
-module RXSCy
+module RXSC
 	VERSION = "0.1"
 	def to_proc; proc(&method(:from_xml)) end
 
 end
 
 require_relative 'lib/notifyingarray'
-require_relative 'rxscy/state'
-require_relative 'rxscy/machine'
-require_relative 'rxscy/transition'
-require_relative 'rxscy/executable'
-require_relative 'rxscy/interpreter'
-require_relative 'rxscy/event'
-require_relative 'rxscy/datamodel'
+require_relative 'rxsc/state'
+require_relative 'rxsc/machine'
+require_relative 'rxsc/transition'
+require_relative 'rxsc/executable'
+require_relative 'rxsc/interpreter'
+require_relative 'rxsc/event'
+require_relative 'rxsc/datamodel'
