@@ -1,5 +1,5 @@
 require 'test/unit'
-require_relative '../rxsc'
+require_relative '../lib/rxsc'
 
 class MachineTester < Test::Unit::TestCase
 	def setup
