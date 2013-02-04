@@ -1,58 +1,37 @@
-module RXSC; end
 class RXSC::Datamodel
-	def initialize(machine=nil)
-		@machine = machine
+	def initialize(scxml=nil)
+		@scxml = scxml
 		@__scope = binding
+		@inited = Set.new
 	end
 	def []( key )
 		run(key.to_s)
 	end
 	def []=( key, value )
+		p key=>value if $DEBUG
 		run("#{key}=nil; ->(v){ #{key}=v }").call(value)
 	end
+	def clear
+		@__scope = binding
+		@inited.clear
+	end
 	def run(code)
-		@__scope.eval(code,'datamodel_evaluator')
+		p code if $DEBUG
+		@__scope.eval(code,'rxsc_datamodel_evaluator')
 	end
 	def In(state_id)
-		@machine.is_active?(state_id)
+		@scxml.is_active?(state_id)
 	end
-	def variables
-		run('Hash[local_variables.map{ |s| [s.to_s,eval(s.to_s)] }]')
+	def init_all(root)
+		root.xpath("//*[#{RXSC::IS_STATE}]").each{ |state| init_state(state) }
 	end
-	def crawl(machine,states_inited=Set.new)
-		queue = [machine]
-		while s = queue.shift
-			next if states_inited.member?(s)
-			states_inited << s
-			queue.concat(s.states)
-			populate_from(s)
+	def init_state(state)
+		unless @inited.member?(state)
+			state.xpath('xmlns:datamodel/xmlns:data').each do |data|
+				raise "<data src='...'> not supported (#{data})" if data['src']
+				self[data['id']] = run(data['expr'] || data.text)
+			end
+			@inited << state
 		end
-	end
-	def populate_from(state)
-		state.data.each(&:run)
-	end
-end
-
-class RXSC::Datamodel::Datum
-	extend RXSC
-	attr_reader :id, :src, :expr
-	attr_accessor :parent
-	def self.from_xml(el)
-		if    el[:src ] then new( el[:id],  src:el[:src]  )
-		elsif	el[:expr] then new( el[:id], expr:el[:expr] )
-		else                 new( el[:id], expr:el.text   )
-		end
-	end
-	def initialize(id,data={})
-		@id      = id
-		@expr    = data[:expr]
-		@src     = data[:src]
-	end
-	def machine
-		@parent && @parent.machine
-	end
-	def run
-		raise "<data src='...'> not supported" if @src
-		machine.datamodel[@id] = machine.datamodel.run(@expr)
 	end
 end

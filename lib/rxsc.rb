@@ -1,16 +1,12 @@
-require 'nokogiri'
-require 'set'
-
-module RXSC
+class RXSC
 	VERSION = "0.1"
-	def to_proc; proc(&method(:from_xml)) end
 end
 
-require_relative 'notifyingarray'
-require_relative 'rxsc/state'
-require_relative 'rxsc/machine'
-require_relative 'rxsc/transition'
-require_relative 'rxsc/executable'
-require_relative 'rxsc/interpreter'
-require_relative 'rxsc/event'
+require 'nokogiri'
+require 'set'
+require 'securerandom'
+
+require_relative 'rxsc/rxsc'
 require_relative 'rxsc/datamodel'
+require_relative 'rxsc/runtime'
+require_relative 'rxsc/executable'
