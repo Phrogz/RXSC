@@ -172,20 +172,20 @@ class RXSC
 
 				enabled_transitions = transitions_for(evt)
 				microstep(enabled_transitions) unless enabled_transitions.empty?
-				puts "     step-external: #{debug_config}" if $DEBUG
+				puts "     step-external: #{inspect_config}" if $DEBUG
 			else
 				break
 			end
 		end
 	
 		exit_interpreter! unless @running
-		puts "  post-step-config: #{debug_config}" if $DEBUG
+		puts "  post-step-config: #{inspect_config}" if $DEBUG
 		self
 	end
 
 	private
 	def microstep(transitions)
-		puts "microstep using #{debug_transitions(transitions)}" if $DEBUG
+		puts "microstep using #{RXSC.inspect_transitions(transitions)}" if $DEBUG
 		exit_states_for_transitions(transitions)
 		transitions.each do |t|
 			@on_trans[t] if @on_trans # Execute user-supplied callback
@@ -203,10 +203,11 @@ class RXSC
 				if @history_value[state]
 					@history_value[state].each do |s|
 						add_states_to_enter[s]
-						ancestors(s,state).each{ |anc| states_to_enter << anc }
+						RXSC.ancestors(s,state).each{ |anc| states_to_enter << anc }
 					end
 				else
-					state.xpath(TRANSITION).each{ |t| targets(t).each(&add_states_to_enter) }
+					# TODO: the specs iteration transitions; is there allowed to be more than one
+					targets( state.at_xpath(TRANSITION) ).each(&add_states_to_enter)
 				end
 			else
 				states_to_enter << state
@@ -225,7 +226,7 @@ class RXSC
 			ancestor = transition_ancestor(t,targs)
 			targs.each(&add_states_to_enter)
 			targs.each do |s|
-				ancestors(s,ancestor).each do |anc|
+				RXSC.ancestors(s,ancestor).each do |anc|
 					states_to_enter << anc
 					if anc.name=='parallel'
 						real_children(anc).each do |child|
@@ -241,7 +242,7 @@ class RXSC
 
 	def enter_states(states,states_for_default_entry)
 		sorted = states.sort_by{ |s| @doc_order[s] }
-		puts "Entering states: #{sorted.map{|s|debug_path(s)}}" if $DEBUG
+		puts "Entering states: #{sorted.map{|s| RXSC.state_path(s)}}" if $DEBUG
 		sorted.each do |s|
 			@configuration    << s
 			@states_to_invoke << s
@@ -289,7 +290,7 @@ class RXSC
 		# Record the history before exiting
 		sorted.each do |s|
 			s.xpath('xmlns:history').each do |h|
-				@history_value[h] = Set.new(@configuration.select{ |s0| h.type == "deep" ? ( s0.atomic? && s0.descendant_of?(s) ) : (s0.parent == s) })
+				@history_value[h] = Set.new(@configuration.select{ |s0| h['type'] == "deep" ? ( atomic?(s0) && descendant_of?(s0,s) ) : (s0.parent == s) })
 			end
 		end
 
@@ -329,7 +330,7 @@ class RXSC
 		enabled_transitions = Set.new
 		@configuration.select{ |s| atomic?(s) }.sort_by{ |s| @doc_order[s] }.each do |state|
 			catch :found_matching do
-				[state,*state.ancestors].each do |s|
+				[state,*RXSC.ancestors(state)].each do |s|
 					s.elements.each do |t|
 						next unless t.name=='transition'
 						if RXSC.matches_event_name?(t,event.name) && condition_matched?(t)
@@ -347,7 +348,7 @@ class RXSC
 		enabled_transitions = Set.new
 		@configuration.select{ |s| atomic?(s) }.sort_by{ |s| @doc_order[s] }.each do |state|
 			catch :found_matching_eventless do
-				[state,*ancestors(state)].each do |s|
+				[state,*RXSC.ancestors(state)].each do |s|
 					s.elements.each do |t|
 						next unless t.name=='transition'
 						if !t['event'] && condition_matched?(t)
@@ -392,42 +393,6 @@ class RXSC
 		end
 	end
 
-	def ancestors(el,stop_state=nil)
-		walker = el.parent
-		[].tap do |a|
-			until walker==stop_state || walker.xml?
-				a << walker
-				walker = walker.parent
-			end
-		end
-	end
-
-	def compound?(state)
-		@cache[:compound].member?(state)
-		# (state.name=='scxml' || state.name=='state') && !state.xpath(REAL_KIDS).empty?
-	end
-
-	def atomic?(state)
-		@cache[:atomic].member?(state)
-		# state.xpath(REAL_KIDS).empty?
-	end
-
-	def descendant_of?( el, ancestor )
-		el.ancestors.to_a.include? ancestor
-	end
-
-	def targets(transition)
-		transition['target'].split.map{ |sid| @state_by_id[sid] }
-	end
-
-	def real_children(state)
-		state.xpath(REAL_KIDS)
-	end
-
-	def diagram_children(state)
-		state.xpath(NON_INITIAL_KIDS)
-	end
-
 	def condition_matched?(transition)
 		!transition['cond'] or @datamodel.run(transition['cond'])
 	end
@@ -450,7 +415,7 @@ class RXSC
 	
 	def LCCA(*states) # least common compound ancestor
 		rest = states[1..-1]
-		ancestors(states.first).each do |anc|
+		RXSC.ancestors(states.first).each do |anc|
 			next unless compound?(anc)
 			return anc if rest.all?{ |s| descendant_of?(s,anc) }
 		end
@@ -459,23 +424,20 @@ class RXSC
 
 	def LCPA(*states) # least common parallel ancestor
 		rest = states[1..-1]
-		ancestors(states.first).each do |anc|
+		RXSC.ancestors(states.first).each do |anc|
 			next unless anc.name=="parallel"
 			return anc if rest.all?{ |s| descendant_of?(s,anc) }
 		end
 		nil
 	end
 
-	def debug_path(state)
-		[state,*ancestors(state,@scxml)].reverse.map{ |s| s['id']||s['name'] }.join('/')
+	def self.ancestors(el,stop_state=nil)
+		walker = el.parent
+		[].tap do |a|
+			until walker==stop_state || walker.xml?
+				a << walker
+				walker = walker.parent
+			end
+		end
 	end
-
-	def debug_config
-		"{ " << @configuration.map{ |s| debug_path(s) }.join(' :: ') << " }"
-	end
-
-	def debug_transitions(ts)
-		"{ " << ts.map{ |t| "<transition on #{debug_path(t.parent)}#{" event='#{t['event']}'" if t['event']}#{" cond='#{t['cond']}'" if t['cond']}#{" target='#{t['target']}'" if t['target']}/>" }.join(' :: ') << " }"
-	end
-
 end

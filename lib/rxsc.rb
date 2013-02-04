@@ -8,5 +8,6 @@ require 'securerandom'
 
 require_relative 'rxsc/rxsc'
 require_relative 'rxsc/datamodel'
-require_relative 'rxsc/runtime'
 require_relative 'rxsc/executable'
+require_relative 'rxsc/meta'
+require_relative 'rxsc/runtime'

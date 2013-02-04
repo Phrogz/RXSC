@@ -25,7 +25,11 @@ class RXSC
 		@running   = false
 	end
 
-	def on_entered(&block);     @on_enter = block; end
+	def name
+		@scxml['name']
+	end
+
+	def on_after_enter(&block); @on_enter = block; end
 	def on_before_exit(&block); @on_exit  = block; end
 	def on_transition(&block);  @on_trans = block; end
 
@@ -35,6 +39,7 @@ class RXSC
 
 	def validate
 		raise "RXSC only supports the 'ruby' datamodel (not #{@scxml['datamodel'].inspect})" unless @scxml['datamodel']=='ruby'
+		# TODO: ensure that each <history> has a <transition>
 		true # TODO: validate
 	end
 
@@ -43,12 +48,12 @@ class RXSC
 	end
 
 	def state_hierarchy
-		nest = ->(state){ { (state['id'] || state['name'])=>diagram_children(state).map(&nest).inject(&:merge) } }
+		nest = ->(state){ { state=>diagram_children(state).map(&nest).inject(&:merge) } }
 		nest[@scxml]
 	end
 
 	def active_state_ids
-		Set.new @configuration.map{ |el| el['id'] }
+		Set.new @configuration.map{ |el| el['id'] || el['name'] }
 	end
 
 	def active_atomic_ids

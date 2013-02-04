@@ -1,5 +1,4 @@
 class RXSC
-
 	to_execute 'log' do |el|
 		puts [el['label'],el['expr'] && @datamodel.run(el['expr'])].compact.join(': ') if $DEBUG
 	end

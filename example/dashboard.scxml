@@ -1,4 +1,4 @@
-<scxml initial="Content" name="Dashboard" version="0.9" xmlns="http://www.w3.org/2005/07/scxml">
+<scxml initial="Content" name="Dashboard" version="1.0" xmlns="http://www.w3.org/2005/07/scxml">
  <datamodel><data id="hasGames" expr="false" /></datamodel>
  <parallel id="Content">
   <state id="FlashBottom" initial="FlashBottomOff">
@@ -6,7 +6,7 @@
     <transition event="pastBottom" target="FlashBottomOn"/>
    </state>
    <state id="FlashBottomOn">
-    <transition event="animation.done" target="FlashBottomOff"/>
+    <transition event="animation.done.flashBottom" target="FlashBottomOff"/>
    </state>
   </state>
   <state id="FlashTop" initial="FlashTopOff">
@@ -14,7 +14,7 @@
     <transition event="pastTop" target="FlashTopOn"/>
    </state>
    <state id="FlashTopOn">
-    <transition event="animation.done" target="FlashTopOff"/>
+    <transition event="animation.done.flashTop" target="FlashTopOff"/>
    </state>
   </state>
   <state id="FlashRight" initial="FlashRightOff">
@@ -22,7 +22,7 @@
     <transition event="pastRight" target="FlashRightOn"/>
    </state>
    <state id="FlashRightOn">
-    <transition event="animation.done" target="FlashRightOff"/>
+    <transition event="animation.done.flashRight" target="FlashRightOff"/>
    </state>
   </state>
   <state id="FlashLeft" initial="FlashLeftOff">
@@ -30,13 +30,13 @@
     <transition event="pastLeft" target="FlashLeftOn"/>
    </state>
    <state id="FlashLeftOn">
-    <transition event="animation.done" target="FlashLeftOff"/>
+    <transition event="animation.done.flashLeft" target="FlashLeftOff"/>
    </state>
   </state>
   <state id="Navigation" initial="intro">
    <state id="intro">
-    <transition cond="hasGames" event="animation.done" target="Games1"/>
-    <transition cond="!hasGames" event="animation.done" target="Store1"/>
+    <transition cond="hasGames"  event="animation.done.intro" target="Games1"/>
+    <transition cond="!hasGames" event="animation.done.intro" target="Store1"/>
    </state>
    <state id="Games">
     <transition event="bumper.right" target="StoreSection"/>
@@ -72,7 +72,7 @@
        <send event="pastBottom"></send>
       </transition>
      </state>
-     <history id="GameSection" type="shallow"></history>
+     <history id="GameSection" type="shallow"><transition target="Games1"/></history>
     </state>
    </state>
    <state id="Store">
@@ -105,7 +105,7 @@
        <send event="pastLeft"></send>
       </transition>
      </state>
-     <history id="StoreSection" type="shallow"></history>
+     <history id="StoreSection" type="shallow"><transition target="Store1"/></history>
     </state>
    </state>
    <state id="Grid">
@@ -138,7 +138,7 @@
       </transition>
       <transition event="Grid2.pastTop back" target="Grid1"/>
      </state>
-     <history id="GridSection" type="shallow"></history>
+     <history id="GridSection" type="shallow"><transition target="Grid1"/></history>
     </state>
    </state>
   </state>

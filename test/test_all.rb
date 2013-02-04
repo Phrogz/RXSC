@@ -69,6 +69,10 @@ class MachineTester < Test::Unit::TestCase
 		h.fire_event("action.done").step
 		assert(h.is_active? 'pass')
 		refute(h.running?,"Machine should stop after moving to final state.")
+
+		h = RXSC(@cases['history2']).start
+		refute(h.running?,"#{h.name} should run to completion")
+		assert(h.is_active?('pass'),"#{h.name} should pass")
 	end
 
 	def test_datamodel
@@ -162,7 +166,7 @@ class MachineTester < Test::Unit::TestCase
 		state_exits  = Hash.new(0)
 		transitions  = 0
 		para = RXSC(@cases['parallel3-internal'])
-		para.on_entered{     |s| state_enters[s['id']] += 1 }
+		para.on_after_enter{ |s| state_enters[s['id']] += 1 }
 		para.on_transition{  |t| transitions           += 1 }
 		para.on_before_exit{ |s| state_exits[s['id']]  += 1 }
 		para.start
