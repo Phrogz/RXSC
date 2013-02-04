@@ -33,6 +33,11 @@ class RXSC
 	def on_before_exit(&block); @on_exit  = block; end
 	def on_transition(&block);  @on_trans = block; end
 
+	def restart
+		stop if running?
+		start
+	end
+
 	def running?
 		!!@running
 	end

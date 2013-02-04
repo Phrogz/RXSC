@@ -4,14 +4,14 @@ require 'json'
 require_relative '../lib/rxsc'
 
 $machine = RXSC(IO.read('dashboard.scxml'))
-$log     = []
-$delta   = []
 $machine.on_after_enter{ |s| $log << "Entered #{RXSC.state_path(s)}"; $delta << { action:"enter", id:s['id']||s['name'] } }
 $machine.on_before_exit{ |s| $log << "Exited  #{RXSC.state_path(s)}"; $delta << { action:"leave", id:s['id']||s['name'] } }
 $machine.on_transition{  |t| $log << "Run Transition #{RXSC.inspect_transition(t)}" }
-$machine.start
 
 get '/' do
+	$log     = []
+	$delta   = []
+	$machine.restart
 	haml(:index).tap{ $delta.clear }
 end
 
