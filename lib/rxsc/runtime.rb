@@ -1,5 +1,5 @@
 class RXSC
-	MAX_ITERATIONS = 100
+	MAX_ITERATIONS = 1000 # Guard against infinite loops of instability in the internal queue
 
 	STATES     = %w[scxml state final parallel initial history].map{ |s| s.prepend "xmlns:" }
 	REALS      = %w[state final parallel].map{ |s| s.prepend "xmlns:" }
@@ -272,8 +272,7 @@ class RXSC
 		states_to_exit = Set.new
 		transitions.each do |t|
 			next unless t['target']
-			targs = targets(t)
-			ancestor = transition_ancestor(t,targs)
+			ancestor = transition_ancestor(t,targets(t))
 			@configuration.each{ |s| states_to_exit << s if descendant_of?(s,ancestor) }
 		end
 
@@ -282,6 +281,7 @@ class RXSC
 	end
 
 	def exit_states(states_to_exit)
+		puts exit_states:states_to_exit.map{ |s| s['id'] } if $DEBUG
 		sorted = states_to_exit.sort_by{ |s| -@doc_order[s] }
 
 		# Invoke any user-supplied callbacks _before_ exiting anything

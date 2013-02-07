@@ -17,9 +17,10 @@ end
 
 post '/event' do
 	content_type :json
+	$log << "Fire event '#{params['id']}'"
 	$machine.fire_event(params['id'])
 	$machine.step
-	{ log:log, delta:delta }.to_json
+	{ log:log, delta:delta, events:$machine.available_events.to_a }.to_json
 end
 
 helpers do
@@ -29,7 +30,7 @@ helpers do
 				h.map{ |s,kids|
 					id   = s['id']
 					name = s['id'] || s['name']
-					name << " [#{s.name}]"  if %w[final history].include?(s.name)
+					name << " [#{s.name}]"  if %w[final history parallel].include?(s.name)
 					"<li><span id='#{id}'>#{name}</span>#{nest(kids)}</li>"
 				}.join
 			}</ul>" 
@@ -56,8 +57,10 @@ __END__
 		%script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js")
 		:css
 			html, body { margin:0; padding:0; height:100%; font-family:'Calibri'; font-size:11pt }
-			#events, #states, #output { position:fixed; top:0; bottom:0; left:0; right:0; overflow:auto }
-			#states { right:70% } #output { left:30%; right:20% } #events { left:80%  }
+			#events, #states, #output { position:fixed; top:0; bottom:0; overflow:auto }
+			#states { left:0; width:25em }
+			#output { left:25em; right:15em }
+			#events { right:0; width:15em }
 			h2 { margin:0; background:#666; color:#ccc; padding:0.2em 20px; border-right:1px solid #333 }
 			.content { padding:20px }
 			#states ul, #states li { display:block; margin:0; padding:0 }
@@ -67,7 +70,7 @@ __END__
 			#states > .content > ul > li > ul > li { margin-left:0 }
 			#states .active { font-weight:bold; color:#036; background:#ff6; padding:0 0.5em }
 			#events button { display:block }
-			pre { border-bottom:3px double #999 }
+			pre { border-bottom:3px double #999; font-size:9pt }
 	%body= yield
 
 @@ index
@@ -83,17 +86,20 @@ __END__
 %section#output
 	%h2 Log
 	.content#log
-		%pre= log
 :javascript
-	showStates(#{ $machine.active_state_ids.to_a.inspect });
+	showData(#{{ log:log, delta:delta, events:$machine.available_events.to_a }.to_json});
+
 	$('button').click(function(){
-		$.post('/event',{id:this.id},function(response){
-			$('#log').append("<pre>"+response.log.replace(/<(?=.)/g,'&lt;')+"</pre>");
-			$.each(response.delta,function(i,change){
-				$('#'+change.id).toggleClass('active',change.action=='enter')
-			});
-		},'json');
+		$.post('/event',{id:this.id},showData,'json');
 	});
-	function showStates(a){
-		for (var i=a.length;i--;) document.getElementById(a[i]).className='active';
+
+	function showData(response){
+		$('#log').append("<pre>"+response.log.replace(/<(?=.)/g,'&lt;')+"</pre>");
+		$.each(response.delta,function(i,change){
+			$('#'+change.id).toggleClass('active',change.action=='enter')
+		});
+		$('button').attr({disabled:true});
+		$.each(response.events,function(i,id){
+			document.getElementById(id).disabled = false;
+		});
 	}
