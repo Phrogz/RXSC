@@ -41,4 +41,8 @@ class RXSC
 		"<transition on #{state_path(t.parent)}#{" event='#{t['event']}'" if t['event']}#{" cond='#{t['cond']}'" if t['cond']}#{" target='#{t['target']}'" if t['target']}/>"
 	end
 
+	def available_events
+		Set.new @configuration.flat_map{ |s| s.xpath('xmlns:transition/@event').flat_map{ |e| e.text.split } }
+	end
+
 end
