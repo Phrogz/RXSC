@@ -8,7 +8,7 @@ class RXSC::Datamodel
 		run(key.to_s)
 	end
 	def []=( key, value )
-		p key=>value if $DEBUG
+		puts "datamodel set #{key}=#{value.inspect}" if $DEBUG
 		run("#{key}=nil; ->(v){ #{key}=v }").call(value)
 	end
 	def clear
@@ -16,7 +16,7 @@ class RXSC::Datamodel
 		@inited.clear
 	end
 	def run(code)
-		p code if $DEBUG
+		puts "datamodel run #{code.inspect}" if $DEBUG
 		@__scope.eval(code,'rxsc_datamodel_evaluator')
 	end
 	def In(state_id)

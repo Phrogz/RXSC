@@ -147,7 +147,7 @@ class RXSC
 				iterations += 1
 			end
 
-			warn "WARNING: stopped unstable system after #{iterations} iterations" if iterations >= MAX_ITERATIONS
+			warn "WARNING: stopped unstable system #{name} after #{iterations} iterations" if iterations >= MAX_ITERATIONS
 
 			# TODO: Enable invoke
 			# run_invokes(@states_to_invoke)  #.each{ |state| state.invokes.each(&:run) }.clear
@@ -259,7 +259,7 @@ class RXSC
 				else
 					fire_event( "done.state.#{parent['id']}", donedata(s), true )
 					grandparent = parent.parent
-					if grandparent && grandparent.name=='parallel' && real_children(grandparent).all?(&:in_final_state?)
+					if grandparent && grandparent.name=='parallel' && real_children(grandparent).all?{ |s| in_final_state?(s) }
 						fire_event( "done.state.#{grandparent['id']}", nil, true )
 					end
 				end
@@ -360,6 +360,15 @@ class RXSC
 			end
 		end
 		filter_preempted(enabled_transitions)
+	end
+
+	def in_final_state?( state )
+		reals = real_children(state)
+		if compound?(state)
+			reals.any?{ |s| @configuration.member?(s) && s.name=='final' }
+		elsif state.name=='parallel'
+			reals.all?{ |s| in_final_state?(s) }
+		end
 	end
 
 	# --------------------------------------------------
